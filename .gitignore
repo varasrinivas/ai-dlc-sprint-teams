@@ -1,0 +1,14 @@
+# authoring scratch
+build/
+*.plan.md
+
+# node / tooling
+node_modules/
+dist/
+__pycache__/
+
+# java
+labs/priorauth-service/target/
+
+# OS
+.DS_Store

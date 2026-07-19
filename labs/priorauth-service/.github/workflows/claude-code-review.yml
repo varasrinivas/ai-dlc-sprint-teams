@@ -1,0 +1,51 @@
+# Automated PR code review with Claude Code.
+#
+# The easiest way to create and maintain this file (and the API-key secret) is to run
+#   claude /install-github-app
+# from a local Claude Code session in this repo. It installs the GitHub App, adds the
+# secret, and scaffolds these workflows. See: https://code.claude.com/docs/en/github-actions
+#
+# This workflow posts a review on every pull request. For lower cost, gate it with the
+# `paths:` filter below or switch to the on-demand "@claude review" model (see claude.yml).
+
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # Only review changes to the service (uncomment to save cost):
+    # paths:
+    #   - "src/**"
+    #   - "pom.xml"
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    # Adding a permissions block resets every unnamed scope to `none`, so list all you need:
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude code review
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Pro/Max users: use claude_code_oauth_token (added by /install-github-app).
+          # API users: use anthropic_api_key.
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Pick a model deliberately; Sonnet is a good default for routine review.
+          claude_args: "--model claude-sonnet-4-6"
+          prompt: |
+            Review this pull request for the Prior Auth Portal service.
+            Follow the conventions in CLAUDE.md and use the same standards as the
+            .claude/agents/code-reviewer and security-reviewer subagents:
+            correctness of the auto-approval rule (threshold 0.85), the layering and
+            DTO conventions, healthcare data handling (no member/provider data in logs
+            or errors), and test coverage including the exact threshold boundary.
+            Post concise inline comments grouped by severity (Blocking / Recommended / Nit).
+            If the change is clean, say so.

@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-DLC for Sprint Teams · Prior Auth Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,400i&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4EFE3; --panel:#FBF8F0; --sink:#ECE4D3; --sink-2:#E4DAC6;
+  --ink:#23201A; --soft:#6B6357; --faint:#948A79; --line:#D9CFBB;
+  --teal:#0E7C6B; --teal-deep:#0A5347; --teal-wash:#E1EEE9;
+  --amber:#B26B1E; --amber-wash:#F0E4CC; --rose:#A23B2E; --rose-wash:#F1E1DC;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+  --body:'Newsreader',Georgia,serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --rail-w:310px; --bar-h:56px; --measure:750px;
+  --sh-1:0 1px 2px rgba(35,32,26,.06),0 2px 8px rgba(35,32,26,.05);
+  --sh-2:0 8px 30px rgba(35,32,26,.10);
+  --teal-line:#bcdcd4; --amber-line:#e0cba6; --rose-line:#e2c4bd;
+  --expected-bg:#f5f7f4; --expected-line:#d5e2dc;
+  --term-bg:#f7f2e7; --code-ink:#2c2924; --term-ink:#403a30; --lede-ink:#33302a;
+  --topbar-bg:rgba(244,239,227,.86); --tick:#d3b98a; --on-accent:#fff;
+  color-scheme:light;
+}
+/* Dark theme — same warm family, inverted. Toggled by the ◐ button (persisted),
+   defaulting to the OS preference. --teal stays the AI lane, --amber the traditional lane. */
+:root[data-theme="dark"]{
+  --paper:#211D16; --panel:#2A251C; --sink:#1A1611; --sink-2:#332D22;
+  --ink:#EDE5D4; --soft:#A79C89; --faint:#807664; --line:#3D362A;
+  --teal:#2FA98F; --teal-deep:#6FCDB8; --teal-wash:#14312A;
+  --amber:#D69A52; --amber-wash:#332714; --rose:#D8836F; --rose-wash:#362119;
+  --sh-1:0 1px 2px rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.28);
+  --sh-2:0 8px 30px rgba(0,0,0,.45);
+  --teal-line:#285045; --amber-line:#4d3d20; --rose-line:#4d2d24;
+  --expected-bg:#1f2723; --expected-line:#32423b;
+  --term-bg:#272013; --code-ink:#d6cdbb; --term-ink:#ccc1ac; --lede-ink:#ddd5c4;
+  --topbar-bg:rgba(33,29,22,.86); --tick:#6e5c39; --on-accent:#0e1f1a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:19px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--teal-deep)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:40; height:var(--bar-h);
+  display:flex; align-items:center; gap:14px;
+  padding:0 18px; background:var(--topbar-bg); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.topbar__brand{font-family:var(--disp); font-weight:600; letter-spacing:-.01em; font-size:15px}
+.topbar__brand b{color:var(--teal-deep)}
+.topbar__spacer{flex:1}
+.topbar__btn{
+  font-family:var(--disp); font-size:12.5px; font-weight:500; color:var(--soft);
+  background:transparent; border:1px solid var(--line); border-radius:8px;
+  padding:6px 11px; cursor:pointer;
+}
+.topbar__btn:hover{color:var(--ink); border-color:var(--faint)}
+.menu-toggle{display:none}
+
+/* ---------- layout ---------- */
+.wrap{display:grid; grid-template-columns:var(--rail-w) minmax(0,1fr); align-items:start}
+
+/* ---------- rail / nav ---------- */
+.rail{
+  position:sticky; top:var(--bar-h); height:calc(100vh - var(--bar-h));
+  overflow-y:auto; background:var(--sink); border-right:1px solid var(--line);
+  padding:22px 16px 60px;
+}
+.rail__title{font-family:var(--disp); font-weight:700; font-size:20px; line-height:1.15; letter-spacing:-.02em; margin:2px 4px 3px}
+.rail__sub{font-size:13.5px; color:var(--soft); margin:0 4px 18px; font-style:italic}
+.progress{margin:0 4px 20px}
+.progress__meta{display:flex; justify-content:space-between; font-family:var(--disp); font-size:11.5px; color:var(--soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px}
+.progress__bar{height:7px; background:var(--sink-2); border-radius:99px; overflow:hidden}
+.progress__fill{height:100%; width:0; background:linear-gradient(90deg,var(--teal),var(--teal-deep)); border-radius:99px; transition:width .4s ease}
+.track{margin-top:20px}
+.track__label{font-family:var(--disp); font-size:11px; font-weight:600; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); margin:0 6px 8px; display:flex; align-items:center; gap:8px}
+.track__label::after{content:""; flex:1; height:1px; background:var(--line)}
+.nav-item{
+  display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:9px;
+  width:100%; text-align:left; cursor:pointer;
+  background:transparent; border:0; border-radius:9px; padding:8px 9px; margin-bottom:1px;
+  color:var(--ink); font-family:inherit; font-size:15px; line-height:1.28;
+}
+.nav-item:hover{background:var(--sink-2)}
+.nav-item.is-active{background:var(--panel); box-shadow:var(--sh-1)}
+.nav-item.is-active .nav-item__num{background:var(--teal); color:var(--on-accent); border-color:var(--teal)}
+.nav-item__num{
+  font-family:var(--disp); font-size:12px; font-weight:600; color:var(--soft);
+  width:26px; height:26px; display:grid; place-items:center;
+  background:var(--paper); border:1px solid var(--line); border-radius:7px;
+}
+.nav-item.is-done .nav-item__num{background:var(--teal-wash); border-color:var(--teal); color:var(--teal-deep)}
+.nav-item__t{min-width:0}
+.nav-item__t small{display:block; font-family:var(--disp); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)}
+.nav-item__dot{width:7px; height:7px; border-radius:99px; background:transparent; border:1.5px solid var(--line)}
+.nav-item.is-done .nav-item__dot{background:var(--teal); border-color:var(--teal)}
+.nav-item.is-roadmap{opacity:.62}
+.nav-item.is-roadmap .nav-item__num{border-style:dashed}
+
+/* ---------- stage ---------- */
+.stage{padding:40px clamp(20px,5vw,64px) 120px; max-width:calc(var(--measure) + 128px); margin:0 auto; width:100%}
+.mod-head{margin-bottom:26px; padding-bottom:22px; border-bottom:1px solid var(--line)}
+.eyebrow{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap}
+.eyebrow__track{font-family:var(--disp); font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--teal-deep)}
+.badge{font-family:var(--disp); font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:99px; border:1px solid}
+.badge--concept{color:var(--soft); background:var(--sink); border-color:var(--line)}
+.badge--lab{color:var(--teal-deep); background:var(--teal-wash); border-color:var(--teal-line)}
+.badge--hands{color:var(--amber); background:var(--amber-wash); border-color:var(--amber-line)}
+.mod-title{font-family:var(--disp); font-weight:700; letter-spacing:-.025em; line-height:1.08; font-size:clamp(30px,4.4vw,44px); margin:0 0 12px}
+.mod-meta{font-family:var(--disp); font-size:13px; color:var(--soft)}
+.mod-meta b{color:var(--ink); font-weight:600}
+
+/* ---------- prose (module body) ---------- */
+.mod-body{max-width:var(--measure)}
+.mod-body > * + *{margin-top:1.05em}
+.mod-body h2{font-family:var(--disp); font-weight:600; letter-spacing:-.02em; font-size:26px; line-height:1.2; margin:1.9em 0 .1em}
+.mod-body h3{font-family:var(--disp); font-weight:600; font-size:19px; letter-spacing:-.01em; margin:1.5em 0 .1em}
+.mod-body p{margin:0}
+.lede{font-size:22px; line-height:1.5; color:var(--lede-ink)}
+.lede b{color:var(--teal-deep)}
+.mod-body strong{font-weight:600}
+.mod-body em{font-style:italic}
+.mod-body ul,.mod-body ol{margin:0; padding-left:1.3em}
+.mod-body li{margin:.32em 0}
+.mod-body li::marker{color:var(--faint)}
+code{font-family:var(--mono); font-size:.82em; background:var(--sink); border:1px solid var(--line); border-radius:5px; padding:1px 5px}
+.pill-ai,.pill-trad{font-family:var(--disp); font-size:12px; font-weight:600; padding:2px 9px; border-radius:99px; white-space:nowrap}
+.pill-ai{color:var(--teal-deep); background:var(--teal-wash)}
+.pill-trad{color:var(--amber); background:var(--amber-wash)}
+
+/* code + terminal blocks */
+.snippet{margin:0}
+.snippet__cap{font-family:var(--disp); font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); margin-bottom:6px}
+pre.code{
+  margin:0; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--teal);
+  border-radius:10px; padding:15px 17px; overflow-x:auto; box-shadow:var(--sh-1);
+}
+pre.code code{background:none; border:0; padding:0; font-size:14px; line-height:1.62; color:var(--code-ink)}
+pre.code.code--term{border-left-color:var(--amber); background:var(--term-bg)}
+pre.code.code--term code{color:var(--term-ink)}
+.code--term .p{color:var(--teal-deep); font-weight:500}   /* prompt marker */
+.code--term .c{color:var(--faint)}                         /* comment */
+
+/* callouts */
+.callout{border-radius:11px; padding:15px 18px; border:1px solid; box-shadow:var(--sh-1)}
+.callout__label{font-family:var(--disp); font-size:11.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:7px}
+.callout p{margin:0}
+.callout--note{background:var(--panel); border-color:var(--line)}
+.callout--note .callout__label{color:var(--soft)}
+.callout--key{background:var(--teal-wash); border-color:var(--teal-line)}
+.callout--key .callout__label{color:var(--teal-deep)}
+.callout--warn{background:var(--rose-wash); border-color:var(--rose-line)}
+.callout--warn .callout__label{color:var(--rose)}
+.callout--try{background:var(--amber-wash); border-color:var(--amber-line)}
+.callout--try .callout__label{color:var(--amber)}
+
+/* figures / diagrams */
+.figure{margin:1.6em 0; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:26px 22px 16px; box-shadow:var(--sh-1)}
+.figure__cap{font-family:var(--disp); font-size:12.5px; color:var(--soft); text-align:center; margin-top:16px; line-height:1.4}
+
+/* ===== animation 1: two lanes (module 1 hero) ===== */
+.lanes{display:flex; flex-direction:column; gap:18px}
+.lane{position:relative}
+.lane__tag{font-family:var(--disp); font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; display:inline-block; margin-bottom:7px; padding:2px 9px; border-radius:99px}
+.lane--trad .lane__tag{color:var(--amber); background:var(--amber-wash)}
+.lane--ai .lane__tag{color:var(--teal-deep); background:var(--teal-wash)}
+.lane__rail{position:relative; height:46px; background:var(--sink); border-radius:10px; overflow:hidden}
+.lane--ai .lane__rail{background:var(--teal-wash)}
+.lane__note{font-family:var(--disp); font-size:12px; color:var(--soft); margin-top:6px; display:block}
+.ticks{position:absolute; inset:0; display:flex; align-items:center; gap:11px; padding:0 14px}
+.ticks i{width:2px; height:16px; background:var(--tick); border-radius:2px; opacity:.8}
+.stops{position:absolute; inset:0}
+.stops span{position:absolute; top:50%; transform:translate(-50%,-50%); font-family:var(--disp); font-size:11px; font-weight:600; color:var(--teal-deep); background:var(--panel); border:1px solid var(--teal-line); padding:2px 8px; border-radius:99px}
+.mover{position:absolute; top:50%; width:22px; height:22px; border-radius:7px; transform:translateY(-50%); box-shadow:var(--sh-1)}
+.mover--slow{background:var(--amber); animation:travel 9s linear infinite}
+.mover--fast{background:var(--teal); animation:travel 4.3s linear infinite}
+@keyframes travel{0%{left:1%;opacity:0}7%{opacity:1}90%{opacity:1}100%{left:95%;opacity:0}}
+
+/* ===== animation 2: context loop (module 2) ===== */
+.loop{position:relative; width:min(400px,100%); aspect-ratio:1/1; margin:8px auto 0}
+.loop__ring{position:absolute; inset:14%; border:2px dashed var(--line); border-radius:50%}
+.loop__orbit{position:absolute; inset:14%; animation:spin 11s linear infinite}
+.loop__orbit i{position:absolute; top:-7px; left:50%; width:13px; height:13px; margin-left:-6px; background:var(--teal); border-radius:50%; box-shadow:0 0 0 5px var(--teal-wash)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loop__node{position:absolute; width:44%; text-align:center; font-family:var(--disp); font-size:12.5px; font-weight:600; color:var(--ink)}
+.loop__node span{display:block; font-family:var(--body); font-size:12px; font-weight:400; font-style:italic; color:var(--soft)}
+.loop__node.n-top{top:-4%; left:28%}
+.loop__node.n-right{top:42%; left:70%}
+.loop__node.n-bottom{top:88%; left:28%}
+.loop__node.n-left{top:42%; left:-14%}
+
+/* ===== animation 3: request flow (module 5) ===== */
+.pipe{display:flex; align-items:stretch; gap:0; flex-wrap:wrap; justify-content:center}
+.pipe__stage{font-family:var(--disp); font-size:12.5px; font-weight:600; background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:11px 13px; text-align:center; box-shadow:var(--sh-1)}
+.pipe__stage small{display:block; font-weight:400; font-family:var(--body); font-style:italic; color:var(--soft); font-size:11.5px}
+.pipe__arrow{align-self:center; color:var(--faint); padding:0 9px; font-size:15px}
+.gate{position:relative; border-color:var(--teal); animation:gatepulse 3s ease-in-out infinite}
+@keyframes gatepulse{0%,100%{box-shadow:0 0 0 0 rgba(14,124,107,.0)}50%{box-shadow:0 0 0 6px rgba(14,124,107,.12)}}
+.branch{display:flex; flex-direction:column; gap:8px; align-self:center; padding-left:9px}
+.branch b{font-family:var(--disp); font-size:11.5px; font-weight:600; padding:5px 10px; border-radius:8px}
+.branch .ok{color:var(--teal-deep); background:var(--teal-wash); border:1px solid var(--teal-line)}
+.branch .rev{color:var(--amber); background:var(--amber-wash); border:1px solid var(--amber-line)}
+
+/* ---------- labs ---------- */
+.scenario{background:var(--sink); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:11px; padding:15px 18px}
+.scenario .callout__label{color:var(--amber)}
+.criteria{counter-reset:c; list-style:none; padding-left:0}
+.criteria li{position:relative; padding-left:38px; margin:.5em 0}
+.criteria li::before{counter-increment:c; content:counter(c); position:absolute; left:0; top:1px; width:26px; height:26px; display:grid; place-items:center; font-family:var(--disp); font-size:12px; font-weight:600; color:var(--teal-deep); background:var(--teal-wash); border:1px solid var(--teal-line); border-radius:7px}
+.paths{margin:1.4em 0; border:1px solid var(--line); border-radius:13px; overflow:hidden; box-shadow:var(--sh-1)}
+.paths__tabs{display:flex; background:var(--sink); border-bottom:1px solid var(--line)}
+.tab{flex:1; font-family:var(--disp); font-size:13.5px; font-weight:600; color:var(--soft); background:transparent; border:0; border-bottom:2px solid transparent; padding:12px; cursor:pointer}
+.tab:hover{color:var(--ink)}
+.tab.is-active{color:var(--teal-deep); background:var(--panel); border-bottom-color:var(--teal)}
+.tab.t-cop.is-active{color:var(--amber); border-bottom-color:var(--amber)}
+.panel{display:none; padding:18px 20px; background:var(--panel)}
+.panel.is-active{display:block}
+.panel > * + *{margin-top:.9em}
+.expected{background:var(--expected-bg); border:1px solid var(--expected-line); border-radius:11px; padding:15px 18px}
+.expected .callout__label{color:var(--teal-deep)}
+.checklist{list-style:none; padding-left:0}
+.checklist li{position:relative; padding-left:28px; margin:.4em 0}
+.checklist li::before{content:"✓"; position:absolute; left:0; top:0; color:var(--teal); font-weight:700; font-family:var(--disp)}
+.verify{background:var(--amber-wash); border:1px solid var(--amber-line); border-radius:11px; padding:15px 18px}
+.verify .callout__label{color:var(--amber)}
+.kbd{font-family:var(--mono); font-size:.78em; background:var(--panel); border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px}
+
+/* roadmap placeholder */
+.roadmap{background:var(--panel); border:1px dashed var(--faint); border-radius:14px; padding:30px 26px; text-align:center; box-shadow:var(--sh-1)}
+.roadmap__tag{font-family:var(--disp); font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--amber)}
+.roadmap h2{font-family:var(--disp); font-size:24px; margin:.5em 0 .3em; border:0}
+.roadmap p{color:var(--soft); max-width:52ch; margin:.5em auto}
+.roadmap code{font-size:.8em}
+
+/* ---------- footer nav ---------- */
+.mod-foot{display:flex; align-items:center; gap:12px; margin-top:44px; padding-top:24px; border-top:1px solid var(--line)}
+.navbtn{font-family:var(--disp); font-size:14px; font-weight:500; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:11px 15px; cursor:pointer; box-shadow:var(--sh-1); max-width:44%}
+.navbtn small{display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)}
+.navbtn:hover{border-color:var(--faint)}
+.navbtn:disabled{opacity:.4; cursor:default; box-shadow:none}
+.navbtn--next{margin-left:auto; text-align:right}
+.complete{font-family:var(--disp); font-size:13px; font-weight:600; color:var(--teal-deep); background:var(--teal-wash); border:1px solid var(--teal-line); border-radius:10px; padding:11px 15px; cursor:pointer}
+.complete.is-done{background:var(--teal); color:var(--on-accent); border-color:var(--teal)}
+.complete[hidden]{display:none}
+
+/* ---------- misc ---------- */
+:focus-visible{outline:2px solid var(--teal); outline-offset:2px; border-radius:4px}
+.scrim{display:none}
+@media (max-width:900px){
+  body{font-size:18px}
+  .menu-toggle{display:inline-flex}
+  .wrap{grid-template-columns:1fr}
+  .rail{position:fixed; top:var(--bar-h); left:0; width:min(320px,86vw); z-index:35; transform:translateX(-100%); transition:transform .28s ease; box-shadow:var(--sh-2)}
+  .rail.is-open{transform:translateX(0)}
+  .scrim.is-open{display:block; position:fixed; inset:var(--bar-h) 0 0; background:rgba(35,32,26,.34); z-index:34}
+  .stage{padding:30px 20px 100px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .mover{animation:none; left:47%; opacity:1}
+  .loop__orbit{animation:none}
+  .gate{animation:none}
+  *{transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="topbar__btn menu-toggle" id="menuBtn" aria-label="Toggle module list">☰ Modules</button>
+  <span class="topbar__brand">AI-DLC · <b>Prior Auth Portal</b></span>
+  <span class="topbar__spacer"></span>
+  <button class="topbar__btn" id="themeBtn" title="Switch between light and dark mode">◐ Theme</button>
+  <button class="topbar__btn" id="resetBtn" title="Clear saved progress on this device">Reset progress</button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="wrap">
+  <aside class="rail" id="rail">
+    <div class="rail__title">AI-DLC for Sprint Teams</div>
+    <div class="rail__sub">Migrating a sprint team from sprints to the AI-Driven Development Lifecycle &mdash; with Claude Code &amp; GitHub Copilot.</div>
+    <div class="progress">
+      <div class="progress__meta"><span>Progress</span><span id="progText">0 / 0</span></div>
+      <div class="progress__bar"><div class="progress__fill" id="progFill"></div></div>
+    </div>
+    <nav id="nav"></nav>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="mod-head">
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 class="mod-title" id="modTitle">Loading…</h1>
+      <div class="mod-meta" id="modMeta"></div>
+    </div>
+    <article class="mod-body" id="body"></article>
+    <nav class="mod-foot">
+      <button class="navbtn navbtn--prev" id="prevBtn"><small>Previous</small><span id="prevT">—</span></button>
+      <button class="complete" id="completeBtn">Mark complete</button>
+      <button class="navbtn navbtn--next" id="nextBtn"><small>Next</small><span id="nextT">—</span></button>
+    </nav>
+  </main>
+</div>
+
+<!-- ============================================================
+     MODULE CONTENT REGISTRY
+     Each module is an <article class="mod" data-mod="mNN">.
+     `/build-module` generates a fragment and injects it here,
+     immediately before the INJECT-MODULES-HERE sentinel, via
+     tools/inject_module.py. Module 1 below is the worked
+     reference: copy its structure and component classes.
+     ============================================================ -->
+<div id="mod-source" hidden>
+
+<article class="mod" data-mod="m01">
+  <p class="lede">Your team already knows how to run a sprint. This course migrates you to something newer: <b>AI-DLC, the AI-Driven Development Lifecycle</b> — a methodology where AI drives the routine work of planning and building, and humans supervise, decide, and approve. Not AI sprinkled onto your old process. A process redesigned around AI.</p>
+
+  <p>AI-DLC comes from AWS (introduced in mid-2025, with its workflow rules later open-sourced as <code>awslabs/aidlc-workflows</code>). Its starting observation is blunt: most teams bolted an assistant onto an unchanged lifecycle — a developer asks for snippets inside the same two-week sprint — and got modest gains. AI-DLC inverts the relationship. The AI <em>initiates</em>: it elaborates your intent into a plan, asks clarifying questions, proposes designs, writes code and tests. Humans do what only humans can: supply business context, resolve ambiguity, and validate at every checkpoint. The mantra is <strong>AI proposes, humans approve</strong>.</p>
+
+  <figure class="figure">
+    <div class="lanes" aria-hidden="true">
+      <div class="lane lane--trad">
+        <span class="lane__tag">Sprint (weeks)</span>
+        <div class="lane__rail">
+          <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <span class="mover mover--slow"></span>
+        </div>
+        <span class="lane__note">plan → build by hand → review at the end — a cycle measured in weeks</span>
+      </div>
+      <div class="lane lane--ai">
+        <span class="lane__tag">Bolt (hours–days)</span>
+        <div class="lane__rail">
+          <div class="stops"><span style="left:14%">intent</span><span style="left:50%">validate</span><span style="left:86%">ship</span></div>
+          <span class="mover mover--fast"></span>
+        </div>
+        <span class="lane__note">AI elaborates and builds; the team validates at checkpoints — a cycle measured in hours</span>
+      </div>
+    </div>
+    <figcaption class="figure__cap">The unit of delivery changes. A <em>bolt</em> is AI-DLC's replacement for the sprint: same rigor, radically shorter cycle — because the typing is no longer the bottleneck.</figcaption>
+  </figure>
+
+  <h2>The vocabulary shift</h2>
+  <p>AI-DLC renames the familiar pieces deliberately, to signal that the economics of planning have changed:</p>
+  <ul>
+    <li><strong>Bolt</strong> replaces the sprint — a short, intense cycle measured in <em>hours or days</em>, in which the team validates an AI-proposed plan, the AI executes it, and the results are reviewed.</li>
+    <li><strong>Unit of Work</strong> replaces the epic — a chunk of intent sized so a bolt (or a few) can deliver it.</li>
+    <li><strong>Mob Elaboration</strong> — an Inception ritual: the AI turns a business intent into requirements and <em>clarifying questions</em>, and the whole team answers them together, in one room, in real time.</li>
+    <li><strong>Mob Construction</strong> — the same collaboration during building: the AI proposes architecture, design, and code; the team resolves the technical decisions on the spot.</li>
+    <li><strong>Persistent context</strong> — the decisions, conventions, and project knowledge live <em>in the repository</em> (not in someone's chat history), so every session and every teammate's AI starts informed. You'll build exactly this in the Persistent Context and AI-engineering modules.</li>
+  </ul>
+
+  <h2>Three phases, one loop</h2>
+  <p>The lifecycle keeps a recognizable shape — <strong>Inception → Construction → Operations</strong> — but inside each phase runs the same loop: <em>AI proposes → humans validate → AI executes → humans review</em>. Inception turns intent into validated units of work (Mob Elaboration lives here). Construction turns units into designed, coded, tested software (Mob Construction lives here). Operations deploys and runs it. What never changes across all three: a human is accountable at every checkpoint. AI-DLC is as much a <em>governance</em> model as a speed model.</p>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The one reframe</div>
+    <p>In a sprint, you were the <span class="pill-trad">author of every line</span>, and process existed to coordinate humans. In AI-DLC you are the <span class="pill-ai">supervisor and validator</span>, and process exists to keep fast-moving AI work safe and aligned. That is the whole shift. Everything else in this course is practice.</p>
+  </div>
+
+  <h2>Honest expectations</h2>
+  <p>AWS and its partners report dramatic gains from AI-DLC engagements — including compressing months of planned work into days of mob sessions — versus the ~10–15% typically measured from unstructured assistant adoption. The gap, in AWS's telling, <em>is</em> the methodology. Treat those numbers as vendor benchmarks: directionally interesting, unverified in your context. And know the real trade-off going in: bolts are faster in calendar time but <strong>hungry for senior attention</strong> — validation checkpoints with the whole team are the new constraint, and this course treats reviewing well as a first-class skill.</p>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Honest from the start</div>
+    <p>Your AI collaborator is sometimes <strong>confidently wrong</strong> — it will invent a method that doesn't exist and describe it convincingly. AI-DLC's answer isn't to trust less or more; it's structural: every artifact passes a human checkpoint before it proceeds. Trust nothing you didn't validate.</p>
+  </div>
+
+  <h2>How this course works</h2>
+  <p>AI-DLC is a methodology, not a tool — AWS names Amazon Q Developer, Kiro, and Claude Code as viable engines. This course runs every lab <strong>dual-path</strong> with <span class="pill-ai">Claude Code</span> and <span class="pill-trad">GitHub Copilot</span>, so your team feels the methodology independent of any one vendor. All of it happens on one real codebase: a small Spring Boot service called the <strong>Prior Auth Portal</strong>, which you'll tour shortly and then work through bolt by bolt — a feature, tests, a bug fix, a refactor — the way a real migration actually goes.</p>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Nothing to install yet. Just sit with the vocabulary: <em>bolt, unit of work, Mob Elaboration, validation checkpoint</em>. For the rest of this course, your job is to direct and validate — not to type. Module 4 gets both tools running on your machine.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m22">
+  <p class="lede">Most teams don't start with an AI-ready repo — they have an existing codebase and want AI to be useful <em>on it</em>. The good news: you don't rewrite anything. You add a thin layer of <b>context and tooling</b> that turns a generic assistant into one that already knows your project.</p>
+
+  <p>This is the retrofit. It's the same move as onboarding a human teammate — you write down how the project works, point out the sharp edges, and give them the tools to help — except here the "teammate" reads those files on every task. We'll use our own Prior Auth service as the worked example, because it has already been through this transformation.</p>
+
+  <h2>What "AI-ready" actually means</h2>
+  <p>An AI-ready repo carries five things, in roughly this order of value:</p>
+  <ul>
+    <li><strong>Shared context</strong> — a <code>CLAUDE.md</code> and a <code>.github/copilot-instructions.md</code> that describe the app, the stack, and the conventions, so you stop repeating yourself in every prompt.</li>
+    <li><strong>Encoded conventions</strong> — <span class="pill-ai">Skills</span> that package a repeated workflow or rule (like our scoring conventions) and load automatically when relevant.</li>
+    <li><strong>Specialized helpers</strong> — <span class="pill-ai">subagents</span> for focused jobs such as code review or security review, each with its own prompt and tools.</li>
+    <li><strong>Automation</strong> — PR review and CI hooks so the assistant helps on every pull request, not just at your desk.</li>
+    <li><strong>Guardrails</strong> — a real test suite. AI moves fast; tests are what let you trust the result. A repo with good tests is far safer to hand to an assistant.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">Highest-leverage first move</div>
+    <p>If you do only one thing, write a good <code>CLAUDE.md</code>. Context beats cleverness: the same assistant produces dramatically better work once it knows your layering, your "don't do this," and how to build and test. Everything else compounds on top of it.</p>
+  </div>
+
+  <h2>The retrofit, step by step</h2>
+  <ol class="criteria">
+    <li><strong>Write the context files.</strong> Start with <code>CLAUDE.md</code> at the repo root: what the app is, the stack, the conventions (and anti-conventions), how to build and test, and the known gotchas. Mirror the essentials into <code>.github/copilot-instructions.md</code>. Commit both — they're shared team memory.</li>
+    <li><strong>Make sure there are tests, and say how to run them.</strong> If coverage is thin, this is the moment to add it (AI can help — see the testing lab). Tests are your safety net for everything that follows.</li>
+    <li><strong>Capture your first repeated workflow as a Skill.</strong> The fifth time you paste the same release checklist or rules explanation, move it into a <code>.claude/skills/&lt;name&gt;/SKILL.md</code> with a sharp description so it triggers on the right tasks.</li>
+    <li><strong>Add a review subagent.</strong> A <code>.claude/agents/code-reviewer.md</code> gives you a consistent first-pass reviewer that keeps the verbose diff-reading out of your main session.</li>
+    <li><strong>Automate on pull requests.</strong> Run <code>claude /install-github-app</code> to add PR review to CI, so every change gets a first look automatically.</li>
+    <li><strong>Write it down and roll it out.</strong> A short "how we use AI here" note in the README, and a light convention for keeping the context files current, turns a personal setup into a team capability.</li>
+  </ol>
+
+  <h2>What that looks like in this repo</h2>
+  <p>Our Prior Auth service has been retrofitted exactly this way. Here's the layer that was added on top of the application code — no source files changed:</p>
+
+  <div class="snippet">
+    <div class="snippet__cap">the "AI-ready" layer in labs/priorauth-service</div>
+    <pre class="code"><code>priorauth-service/
+├── CLAUDE.md                          # project context for Claude Code
+├── .github/
+│   ├── copilot-instructions.md        # the same context for Copilot
+│   └── workflows/
+│       ├── claude-code-review.yml     # auto-review every PR
+│       └── claude.yml                 # respond to @claude in PRs/issues
+└── .claude/
+    ├── agents/
+    │   ├── code-reviewer.md           # a review subagent
+    │   └── security-reviewer.md       # a healthcare-aware security subagent
+    └── skills/
+        └── prior-auth-rules/
+            └── SKILL.md               # scoring conventions, loaded on demand</code></pre>
+  </div>
+
+  <p>That's the whole transformation: a handful of small files. The application is unchanged, but the assistant now knows the layering, applies the scoring rules automatically, reviews changes to a consistent standard, and shows up on every pull request. The rest of this track builds each of these pieces in depth.</p>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Don't commit secrets or patient data</div>
+    <p>These files live in the repo and travel with it. Keep credentials, tokens, and any member or provider data out of <code>CLAUDE.md</code>, Skills, and workflow files. Put secrets in your CI secret store (that's what <code>/install-github-app</code> sets up), never in the YAML.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Open <code>labs/priorauth-service</code> and read the four files under <code>.claude/</code>. Notice how each one is short and specific. Over the next modules you'll learn to write your own — starting with Skills.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m23">
+  <p class="lede">The fifth time you paste the same conventions or the same checklist into a prompt, stop. That repetition is a <b>Skill</b> waiting to be written. A Skill teaches Claude something once, and it loads that knowledge on its own whenever a task calls for it.</p>
+
+  <p>You already met one in the last track: the service repo ships <code>.claude/skills/prior-auth-rules/SKILL.md</code>, which encodes how the auto-approval scoring works. When you ask Claude to change a penalty, that Skill loads automatically and keeps the rules explainable and tested — without you re-explaining anything.</p>
+
+  <h2>What a Skill is</h2>
+  <p>A Skill is a folder containing a <code>SKILL.md</code> file: YAML frontmatter on top, Markdown instructions below. It lives in one of two places, and the <em>folder name</em> is the Skill's name:</p>
+  <ul>
+    <li><code>.claude/skills/&lt;name&gt;/SKILL.md</code> — project scope, committed to the repo and shared with the team.</li>
+    <li><code>~/.claude/skills/&lt;name&gt;/SKILL.md</code> — personal scope, available in all your projects.</li>
+  </ul>
+
+  <div class="snippet">
+    <div class="snippet__cap">the frontmatter of the Skill shipped in this repo</div>
+    <pre class="code"><code>---
+name: prior-auth-rules
+description: Conventions for the Prior Auth auto-approval rules engine. Use
+  whenever adding, changing, or reviewing approval scoring logic, the
+  auto-approval threshold, or AutoApprovalService.
+---
+
+# Prior Auth rules engine
+Apply this whenever the task touches auto-approval scoring...</code></pre>
+  </div>
+
+  <h2>The one thing that makes a Skill work</h2>
+  <p>Skills are <strong>model-invoked</strong>. You don't type a command to run one — Claude reads the <code>description</code> and decides, on its own, whether the current task matches. That makes the description the most important line in the file. Name the trigger conditions plainly: <em>"Use whenever adding, changing, or reviewing approval scoring"</em> fires reliably; a vague <em>"rules helper"</em> does not.</p>
+
+  <div class="callout callout--key">
+    <div class="callout__label">Skill vs CLAUDE.md vs slash command</div>
+    <p>Three tools, three jobs. <strong>CLAUDE.md</strong> is always-on context — facts and conventions Claude sees every time. A <strong>Skill</strong> is on-demand expertise — a procedure or body of knowledge loaded only when relevant, so it costs almost nothing the rest of the time. A <strong>slash command</strong> is an explicit action you trigger by typing <code>/name</code>. Reach for a Skill when a fact in CLAUDE.md has grown into a multi-step procedure you keep repeating.</p>
+  </div>
+
+  <h2>Anatomy and growth</h2>
+  <p>Only <code>SKILL.md</code> is required — that alone is a working Skill. As it grows, a Skill folder can hold optional resources that Claude pulls in as needed:</p>
+  <ul>
+    <li><code>scripts/</code> — helper scripts for deterministic steps.</li>
+    <li><code>references/</code> — longer detail Claude loads on demand. Keep <code>SKILL.md</code> focused (aim under ~500 lines) and move depth here.</li>
+    <li><code>assets/</code> — templates, examples, or files the Skill produces.</li>
+  </ul>
+
+  <div class="callout callout--note">
+    <div class="callout__label">Write once, use everywhere</div>
+    <p>Skills follow an open standard, so the same <code>SKILL.md</code> works in Claude Code, the Claude apps, the API, and other compatible agents. And the two tools have converged: a <code>.claude/commands/deploy.md</code> and a <code>.claude/skills/deploy/SKILL.md</code> both create <code>/deploy</code> — a slash command is now a Skill with no extra features.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Open <code>.claude/skills/prior-auth-rules/SKILL.md</code> and read the <code>description</code>. Then, in a Claude Code session, ask it to add a small scoring penalty and watch it apply the Skill's rules (deterministic, tested, explainable) without being told. Next up: subagents.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m24">
+  <p class="lede">A subagent is a second Claude with its own context window, its own tools, and its own instructions — a <b>specialist you delegate a focused job to</b>. The verbose part of the work stays in the subagent's context, and only the summary comes back to your main conversation.</p>
+
+  <h2>Why they exist</h2>
+  <p>Your context window is finite. Read thirty files or a giant test log into your main thread and the quality of everything after it degrades. A subagent solves this: it does the heavy reading in its own context and hands back just the result. Think of subagents as browser tabs for a Claude Code session — a place to chase a tangent without losing the main thread.</p>
+
+  <h2>Where they live and what's in them</h2>
+  <p>A subagent is a Markdown file: YAML frontmatter, then the system prompt as the body.</p>
+  <ul>
+    <li><code>.claude/agents/&lt;name&gt;.md</code> — project scope, committed and shared with the team.</li>
+    <li><code>~/.claude/agents/&lt;name&gt;.md</code> — personal scope, available in every project.</li>
+  </ul>
+
+  <div class="snippet">
+    <div class="snippet__cap">the shape of the code-reviewer shipped in this repo</div>
+    <pre class="code"><code>---
+name: code-reviewer
+description: Reviews recent changes for quality and this repo's
+  conventions. Use proactively after implementing a change or before a PR.
+tools: Read, Grep, Glob, Bash
+model: sonnet
+---
+You are a senior code reviewer for the Prior Auth service.
+When invoked, get the diff, read the changed files and CLAUDE.md, and
+report findings grouped by severity with a file:line and a concrete fix.</code></pre>
+  </div>
+
+  <p>Four fields carry the weight:</p>
+  <ul>
+    <li><strong><code>description</code></strong> drives delegation — Claude reads it to decide when to hand a task off. Specific, action-oriented phrasing ("use proactively before commits touching auth") makes it delegate more readily.</li>
+    <li><strong><code>tools</code></strong> is least-privilege. List only what the job needs — a reviewer gets read-only <code>Read, Grep, Glob</code>. Omit the field and it inherits every tool.</li>
+    <li><strong><code>model</code></strong> pins <code>sonnet</code>, <code>opus</code>, or <code>haiku</code>, or says <code>inherit</code> to match your main session.</li>
+    <li><strong>Location</strong> sets scope, as above.</li>
+  </ul>
+
+  <h2>Creating and using one</h2>
+  <p>Two ways to make a subagent. Ask Claude — <em>"create a subagent that reviews Java changes against CLAUDE.md, read-only"</em> — and it writes the <code>.claude/agents/&lt;name&gt;.md</code> file for you to refine. Or write the file by hand. The <code>/agents</code> command is the manager for listing and editing them.</p>
+  <p>To use one, Claude delegates automatically when a task matches the description, or you invoke it explicitly:</p>
+  <div class="snippet">
+    <div class="snippet__cap">explicit invocation in a Claude Code session</div>
+    <pre class="code code--term"><code><span class="p">&gt;</span> use the code-reviewer subagent to review my staged changes</span></code></pre>
+  </div>
+
+  <div class="callout callout--note">
+    <div class="callout__label">Built-ins &amp; parallelism</div>
+    <p>Claude Code already ships subagents like <strong>Explore</strong> and <strong>Plan</strong> (and a general-purpose worker) — get comfortable with those before writing custom ones. And multiple subagents can run at once: <em>"research the auth, database, and API modules in parallel using separate subagents"</em> keeps three independent investigations off your main thread.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">The one gotcha</div>
+    <p>Subagent files are loaded at <strong>session start</strong>. If you create or edit a <code>.claude/agents/*.md</code> file while Claude Code is running, restart the session to pick it up. (Agents created or edited through <code>/agents</code> take effect immediately — that asymmetry catches everyone once.)</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>This repo ships two subagents — <code>code-reviewer.md</code> and <code>security-reviewer.md</code> — as templates. Open both and notice the pattern: one job each, a tight tool list, and a description that says exactly when to use it. Next module turns this into a hands-on lab.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m25">
+  <p class="lede">Time to put subagents to work. In this lab you'll get a <b>consistent first-pass reviewer</b> running on the Prior Auth service — one that catches obvious issues before a teammate spends time on the change — and you'll do it both with Claude Code and with GitHub Copilot.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As a team, we want every code change to get an automatic first-pass review against our own conventions, so that human review can focus on judgment instead of catching the same mistakes over and over.</p>
+  </div>
+
+  <h2>Acceptance criteria</h2>
+  <ol class="criteria">
+    <li>A code-review agent exists, scoped to <em>this repo's</em> conventions (the layering, the DTO rule, the <code>0.85</code> threshold, test coverage).</li>
+    <li>Running it on a change produces findings grouped by severity, each with a <code>file:line</code> and a concrete fix.</li>
+    <li>The agent is <strong>read-only</strong> — it reports, it never edits code.</li>
+    <li><em>Stretch:</em> a second, specialized agent for security-sensitive changes.</li>
+  </ol>
+
+  <h2>Do it both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+
+    <div class="panel is-active" data-panel="cc">
+      <p>This repo already ships <code>.claude/agents/code-reviewer.md</code>. You can use it as-is, or create your own to feel the workflow — either way, then run it on a real change.</p>
+      <p><strong>Option A — create one from a description:</strong></p>
+      <div class="snippet">
+        <div class="snippet__cap">prompt to Claude Code</div>
+        <pre class="code"><code>Create a subagent that reviews Java changes in this service against the
+conventions in CLAUDE.md. It should be read-only (Read, Grep, Glob) and
+report findings grouped by severity with file:line and a fix.</code></pre>
+      </div>
+      <p>Claude writes the <code>.claude/agents/&lt;name&gt;.md</code> file. Restart the session so it loads.</p>
+      <p><strong>Then run it on a change:</strong> make a small edit to the service, stage it, and invoke the reviewer.</p>
+      <div class="snippet">
+        <div class="snippet__cap">Claude Code session</div>
+        <pre class="code code--term"><code><span class="p">$</span> git add -A
+<span class="p">&gt;</span> use the code-reviewer subagent to review my staged changes</code></pre>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="cop">
+      <p>Copilot's equivalent is <strong>Copilot code review</strong> — a built-in reviewer rather than an agent file you author. You invoke it instead of building it.</p>
+      <ul>
+        <li>In the editor, open the Source Control / changes view and request a Copilot review of your uncommitted changes.</li>
+        <li>On a pull request, add <strong>Copilot as a reviewer</strong> (or enable automatic Copilot review for the repo) so it comments on the diff.</li>
+        <li>Read its inline comments the same way you'd read a human reviewer's.</li>
+      </ul>
+      <div class="callout callout--note">
+        <div class="callout__label">The trade-off worth noticing</div>
+        <p>The Claude subagent is <em>yours</em>: you wrote its standard, so it reviews against your layering, your DTO rule, your <code>0.85</code> threshold. Copilot's reviewer is turnkey and zero-setup, but far less customizable to your conventions. On a migrating team, use both — Copilot for a quick generic pass, the subagent for a review that knows your codebase.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>A good review reads roughly like this (yours will differ):</p>
+    <div class="snippet">
+      <pre class="code"><code>## Review summary
+One blocking issue: a scoring change landed without a matching test.
+
+## Blocking
+- AutoApprovalService.java:41 — new penalty added but no test covers it;
+  the 0.85 boundary is now untested. Add a parameterized case.
+
+## Recommended
+- PriorAuthController.java:52 — returns the entity; map to AuthResponse.
+
+## Nits
+- None.</code></pre>
+    </div>
+  </div>
+
+  <h2>Review checklist</h2>
+  <ul class="checklist">
+    <li>The agent's <code>tools</code> are read-only — it can't modify code.</li>
+    <li>Its <code>description</code> says clearly when to use it.</li>
+    <li>It references this repo's conventions (open <code>CLAUDE.md</code>), not generic advice.</li>
+    <li>It catches a <em>real</em> issue when you plant one (see Verify).</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p>Plant a deliberate violation, then prove the reviewer catches it. For example, change a penalty in <code>AutoApprovalService</code> <strong>without</strong> updating the test, or return the JPA entity from a controller method. Run the reviewer — it should flag it as Blocking or Recommended. Then fix it and re-run to confirm a clean report.</p>
+  </div>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The lesson</div>
+    <p>You defined the reviewer's standard <em>once</em>, in the agent file. Now every review is consistent, runs in its own context, and frees your teammates to review for design and intent instead of re-checking the basics.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m26">
+  <p class="lede">A code-review agent helps at your desk. This lab pushes review <b>left into CI</b>, so every pull request gets an automatic first pass before a teammate even opens it — again, both with Claude Code and with GitHub Copilot.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As a team, we want every pull request to receive an automated first-pass review the moment it opens, and to be able to ask an assistant for help directly in the PR — without leaking secrets or running up surprise costs.</p>
+  </div>
+
+  <h2>Acceptance criteria</h2>
+  <ol class="criteria">
+    <li>Opening a pull request triggers an automatic review comment.</li>
+    <li>Mentioning the assistant in a PR or issue triggers on-demand help.</li>
+    <li>The API credential lives in the CI secret store, never in the workflow YAML.</li>
+    <li>Review scope and cost are controlled (a path filter, or on-demand rather than every push).</li>
+  </ol>
+
+  <h2>Do it both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+
+    <div class="panel is-active" data-panel="cc">
+      <p>The repo already ships two workflows — <code>.github/workflows/claude-code-review.yml</code> (auto-review on every PR) and <code>claude.yml</code> (responds to <code>@claude</code>). The recommended way to install them and the secret is one command:</p>
+      <div class="snippet">
+        <div class="snippet__cap">from a local Claude Code session in the repo</div>
+        <pre class="code code--term"><code><span class="p">$</span> claude
+<span class="p">&gt;</span> /install-github-app</code></pre>
+      </div>
+      <p>It installs the GitHub App, adds the credential as a repository secret, and scaffolds the workflow files. Two paths for review: auto on every PR (the shipped <code>claude-code-review.yml</code>), or on-demand by commenting <code>@claude review</code> on a PR. A few details that matter:</p>
+      <ul>
+        <li><strong>Permissions:</strong> the moment a workflow declares a <code>permissions:</code> block, every unnamed scope resets to <code>none</code>. List them all — at least <code>contents: read</code>, <code>pull-requests: write</code>, <code>id-token: write</code>.</li>
+        <li><strong>Credential:</strong> Pro/Max users use <code>claude_code_oauth_token</code>; API users use <code>anthropic_api_key</code>. Either way it's a secret, never inline.</li>
+        <li><strong>Model &amp; cost:</strong> pin a model with <code>claude_args: "--model claude-sonnet-4-6"</code>; gate cost with a <code>paths:</code> filter or the on-demand model.</li>
+      </ul>
+    </div>
+
+    <div class="panel" data-panel="cop">
+      <p>GitHub Copilot offers this as a built-in feature rather than a workflow you write:</p>
+      <ul>
+        <li><strong>Copilot code review:</strong> enable it as an automatic reviewer for the repository (or add Copilot as a reviewer on a specific PR) so it posts review comments on new pull requests.</li>
+        <li><strong>Fix with Copilot:</strong> when a CI check goes red, the button hands the failure to Copilot, which reads the logs, pushes a fix to the branch, and tags you for review.</li>
+      </ul>
+      <div class="callout callout--note">
+        <div class="callout__label">The trade-off worth noticing</div>
+        <p>The Claude Code Action runs the full Claude Code runtime in the runner — a live shell, a custom prompt tied to your <code>CLAUDE.md</code>, your choice of model, and Bedrock/Vertex for data residency. Copilot's review is more turnkey but less customizable. Same pattern as the last lab: turnkey generic pass vs a review that knows your codebase.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>On a new PR, the bot posts a review comment — a short summary plus inline notes grouped by severity, e.g. flagging a scoring change that lacks a test, or a controller returning the entity instead of <code>AuthResponse</code>. On a clean PR it says so rather than inventing issues.</p>
+  </div>
+
+  <h2>Review checklist</h2>
+  <ul class="checklist">
+    <li>The credential is a repository secret, not text in the YAML.</li>
+    <li>The <code>permissions:</code> block names every scope the job needs.</li>
+    <li>Cost is bounded (path filter or on-demand), not "review everything on every push" by accident.</li>
+    <li>The review prompt points at <code>CLAUDE.md</code> so it reviews against your conventions.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p>Open a pull request with a small change to the service and confirm the review comment appears within a minute or two. Then comment <code>@claude review</code> to trigger an on-demand pass, and (Copilot side) request a Copilot review on the same PR to compare the two.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Guardrails</div>
+    <p>Automated review touches your repo, so mind the edges: keep secrets in the store (that's what <code>/install-github-app</code> sets up), be cautious with pull requests from forks, and remember cost scales with PR size on the managed path — a single review on a 2,000-line refactor can be much pricier than a small one. For most teams running dozens of PRs a month, though, costs stay modest.</p>
+  </div>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The lesson</div>
+    <p>Review moved left. Every pull request now gets a first pass automatically, so humans arrive already knowing the basics are covered and can spend their attention on design and intent.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m27">
+  <p class="lede">You've now met the building blocks that shape how Claude Code works on your codebase. Two more complete the toolbox: <b>MCP</b>, to reach outside the repo, and <b>hooks</b>, to enforce rules deterministically. This module places all of them so you know which one to reach for.</p>
+
+  <h2>MCP — reaching outside the repo</h2>
+  <p>Everything so far has worked with files in your project. <strong>MCP (the Model Context Protocol)</strong> lets Claude Code connect to external tools and data through a standard interface — an issue tracker, a database, internal docs, a browser. You add a server, and Claude can use it as part of a task.</p>
+  <div class="snippet">
+    <div class="snippet__cap">adding an MCP server</div>
+    <pre class="code code--term"><code><span class="p">$</span> claude mcp add <span class="c"># register a server; or commit a .mcp.json for the team</span></code></pre>
+  </div>
+  <p>Now a task like "pull the acceptance criteria from ticket PA-142 and implement it" can read the ticket directly, instead of you copying it in. <strong>Reach for MCP</strong> when the context or the action you need lives outside the codebase.</p>
+
+  <h2>Hooks — deterministic enforcement</h2>
+  <p>Skills, subagents, and CLAUDE.md all <em>influence</em> the model — but the model still decides. <strong>Hooks are different: they run your code, every time, regardless of what the model chooses.</strong> A hook is a shell command Claude Code runs automatically at a lifecycle event, declared in <code>.claude/settings.json</code> (project, shared) or <code>~/.claude/settings.json</code> (personal).</p>
+  <p>The events you'll use most:</p>
+  <ul>
+    <li><strong><code>PreToolUse</code></strong> — runs before a tool call and can <em>block</em> it (exit code 2). Good for guardrails: refuse edits outside <code>src/</code>, or block reading a secrets file.</li>
+    <li><strong><code>PostToolUse</code></strong> — runs after a tool call. Can't undo it, but perfect for auto-formatting after every file write, or logging for an audit trail.</li>
+    <li><strong><code>Stop</code></strong> and <strong><code>SessionStart</code></strong> — react when Claude finishes, or inject context (e.g. recent commits) at the start of a session.</li>
+  </ul>
+  <div class="snippet">
+    <div class="snippet__cap">.claude/settings.json — auto-format on every edit</div>
+    <pre class="code"><code>{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "your-formatter-here" }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+  </div>
+  <p>For this Java service that command might run your formatter or a quick <code>mvn -q compile</code>; the <code>matcher</code> is the tool name to intercept.</p>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Hooks run as code</div>
+    <p>A hook executes with your permissions, on your machine, automatically. Treat hook scripts as real code: keep them small, review them, keep secrets out of the script body, and remember a failing hook can interrupt the workflow. The exact event list and JSON schema move quickly — check the hooks reference in the docs before relying on a specific field.</p>
+  </div>
+
+  <h2>The whole toolbox, in one place</h2>
+  <p>Six tools, six jobs. When something feels repetitive or fragile, this is the menu:</p>
+  <ul>
+    <li><strong>CLAUDE.md</strong> — always-on context (facts and conventions Claude sees every time).</li>
+    <li><strong>Skills</strong> — on-demand expertise, loaded automatically when a task matches.</li>
+    <li><strong>Subagents</strong> — isolated specialists you delegate focused work to.</li>
+    <li><strong>Slash commands</strong> — explicit actions you trigger by name (now a Skill with no extra features).</li>
+    <li><strong>MCP</strong> — connect tools and data outside the repo.</li>
+    <li><strong>Hooks</strong> — deterministic rules enforced in the harness, not left to the model.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The through-line of this whole course</div>
+    <p>Every one of these does the same thing: it moves knowledge and judgment <em>out of the individual prompt</em> and into the shared, durable setup of the repo — so your team's standards hold whoever is driving, and whichever assistant they're using.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Where to go next</div>
+    <p>That completes the AI engineering track. The final module is the on-ramp to extending the Portal — a React front-end that calls this API, and a second microservice — reusing everything you've practiced. And because these features move fast, make a habit of checking the docs when you wire up a new one.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m02">
+  <p class="lede">Before you hand real work to an AI collaborator, it pays to know what it actually is. Not magic, not a junior developer — a <b>very capable prediction engine</b> with sharp strengths and predictable failure modes. AI-DLC's checkpoints exist precisely because of how this thing thinks.</p>
+
+  <h2>What it's genuinely good at</h2>
+  <p>A large language model has read an enormous amount of code and prose. Give it clear intent and enough context and it will draft plans, ask sensible clarifying questions, write idiomatic code, generate test cases, and explain unfamiliar codebases — in seconds, tirelessly, in any framework your team uses. That's why AI-DLC lets it drive the routine work: elaboration, drafting, construction.</p>
+
+  <h2>The three limits that shape the methodology</h2>
+  <ul>
+    <li><strong>It only knows what's in the conversation.</strong> The model has no privileged view of your repo, your standards, or your last decision — only what's loaded into its context. Feed it nothing, and it fills the gaps with plausible guesses.</li>
+    <li><strong>It predicts; it doesn't verify.</strong> Output is what's <em>likely</em>, not what's <em>checked</em>. That's why it can invent a method that doesn't exist and describe it fluently — the classic <strong>confident error</strong>.</li>
+    <li><strong>It forgets between sessions.</strong> Close the session and the shared understanding evaporates — unless you persisted it. This is exactly why AI-DLC makes <em>persistent context in the repository</em> a first-class concept (Module 7).</li>
+  </ul>
+
+  <figure class="figure">
+    <div class="loop" aria-hidden="true">
+      <div class="loop__ring"></div>
+      <div class="loop__orbit"><i></i></div>
+      <div class="loop__node n-top">Intent &amp; context<span>you supply it</span></div>
+      <div class="loop__node n-right">Proposal<span>AI elaborates &amp; drafts</span></div>
+      <div class="loop__node n-bottom">Validation<span>humans decide</span></div>
+      <div class="loop__node n-left">Persisted decisions<span>back into the repo</span></div>
+    </div>
+    <figcaption class="figure__cap">The collaboration loop. Every pass around it makes the next one better — because validated decisions flow back into the context the AI starts from.</figcaption>
+  </figure>
+
+  <div class="callout callout--key">
+    <div class="callout__label">Why AI-DLC is shaped the way it is</div>
+    <p>Each ritual answers one limit. <strong>Mob Elaboration</strong> exists because the model needs context and surfaces its gaps as questions. <strong>Validation checkpoints</strong> exist because prediction isn't verification. <strong>Persistent context</strong> exists because sessions forget. The methodology is the model's limits, engineered around.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Keep one habit from here on: when AI output looks right, ask "how would I <em>know</em>?" If the answer isn't a test, a run, or a source you checked, it isn't validated yet.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m03">
+  <p class="lede">AI-DLC is a methodology, <b>not a product</b>. AWS names Amazon Q Developer, Kiro, and Claude Code as viable engines for it — and this course adds GitHub Copilot to the mix, because that's what many sprint teams already own. The process is the same; the tools plug into it differently.</p>
+
+  <h2>The two tools this course runs on</h2>
+  <p><span class="pill-ai">Claude Code</span> is a terminal-based agent. You give it intent in plain language; it reads your repo, proposes a plan, edits files, runs commands and tests, and works through multi-step tasks. It reads <code>CLAUDE.md</code> automatically — which makes it a natural fit for AI-DLC's persistent context — and it's the tool this very course is authored with.</p>
+  <p><span class="pill-trad">GitHub Copilot</span> lives in your editor and on GitHub.com. It completes code as you type (ghost text you accept with <span class="kbd">Tab</span>), answers questions in Copilot Chat with <code>@workspace</code> context, reviews pull requests, and reads repo-wide instructions from <code>.github/copilot-instructions.md</code>.</p>
+
+  <h2>Where each shines in a bolt</h2>
+  <ul>
+    <li><strong>Elaboration &amp; multi-file construction:</strong> Claude Code's territory — it can take a unit of work from intent to plan to edited, tested code across the codebase.</li>
+    <li><strong>In-flow completion &amp; quick questions:</strong> Copilot's territory — when a human <em>is</em> typing (reviewing, adjusting, exploring), ghost text and chat keep them moving.</li>
+    <li><strong>Pull-request review:</strong> both — Claude via the GitHub app/Action, Copilot via its built-in reviewer. You'll wire up both in the automation track.</li>
+  </ul>
+
+  <div class="callout callout--note">
+    <div class="callout__label">Why every lab is dual-path</div>
+    <p>Running the same bolt through both tools teaches you the <em>methodology</em> rather than a vendor's workflow. Teams that learn AI-DLC tool-agnostically can switch engines — Q, Kiro, Claude, Copilot — without relearning how they work.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Honest comparison rule</div>
+    <p>This course won't tell you one tool "wins." They genuinely occupy different points: agentic depth and customization versus in-editor ubiquity and turnkey features. Most migrating teams end up using both — and the labs are designed so you feel <em>why</em> for yourself.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Next is setup day. Have your GitHub account handy (for Copilot) and either a Claude subscription or an Anthropic API key (for Claude Code).</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m04">
+  <p class="lede">Setup day. By the end of this module both tools are installed, authenticated, and have each answered one real question about the Prior Auth service. Nothing conceptual today — just getting the engines running.</p>
+
+  <div class="callout callout--note">
+    <div class="callout__label">Before you start</div>
+    <p>You need: a recent Node.js (for the npm install path), VS Code (or a JetBrains IDE) for Copilot, a GitHub account with Copilot access, and a Claude subscription or Anthropic API key. Install steps drift as tools evolve — if anything below doesn't match what you see, trust the official docs over this page.</p>
+  </div>
+
+  <h2>Install both</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">terminal</div>
+        <pre class="code code--term"><code><span class="p">$</span> npm install -g @anthropic-ai/claude-code
+<span class="p">$</span> cd labs/priorauth-service
+<span class="p">$</span> claude   <span class="c"># first run walks you through login</span></code></pre>
+      </div>
+      <p>Launching <code>claude</code> inside the service folder matters: it reads the shipped <code>CLAUDE.md</code> automatically, so it starts already knowing the layering, the 0.85 rule, and the conventions.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <ul>
+        <li>In VS Code, install the <strong>GitHub Copilot</strong> extension (Copilot Chat comes with it).</li>
+        <li>Sign in with your GitHub account when prompted and confirm your Copilot subscription is active.</li>
+        <li>Open the <code>labs/priorauth-service</code> folder. Copilot picks up <code>.github/copilot-instructions.md</code> as repo-wide context.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>First contact — same question, both tools</h2>
+  <p>Ask each tool the identical question and compare the answers:</p>
+  <div class="snippet">
+    <div class="snippet__cap">the prompt</div>
+    <pre class="code"><code>What does AutoApprovalService do, and under what conditions is a
+request routed to a human reviewer?</code></pre>
+  </div>
+  <p>In Claude Code, just type it. In Copilot Chat, prefix with <code>@workspace</code> so it searches the repo. A correct answer mentions the 0.90 base score, the three penalties, and the <code>&gt;= 0.85</code> auto-approve comparison.</p>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p>Three checks before you move on: <code>claude</code> launches and answers with specifics from <em>this</em> repo (not generic Spring talk); Copilot ghost text appears when you type in a Java file; and <code>mvn test</code> passes in <code>labs/priorauth-service</code> — the safety net every later bolt relies on.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Both engines running? Good. Next: a proper tour of the codebase they'll be working on.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m05">
+  <p class="lede">Every bolt in this course runs on one real codebase: the <b>Prior Auth Portal</b>, a small Spring Boot service. A provider submits a prior authorization request for a member; the service scores it and either auto-approves it or routes it to a human reviewer. Ten minutes here saves confusion in every lab that follows.</p>
+
+  <h2>The request's journey</h2>
+  <figure class="figure">
+    <div class="pipe" aria-hidden="true">
+      <div class="pipe__stage">Controller<small>validate &amp; delegate</small></div>
+      <div class="pipe__arrow">→</div>
+      <div class="pipe__stage">Service<small>use case + transaction</small></div>
+      <div class="pipe__arrow">→</div>
+      <div class="pipe__stage gate">Rules engine<small>score vs 0.85</small></div>
+      <div class="pipe__arrow">→</div>
+      <div class="branch">
+        <b class="ok">≥ 0.85 → APPROVED</b>
+        <b class="rev">&lt; 0.85 → PENDING_REVIEW</b>
+      </div>
+    </div>
+    <figcaption class="figure__cap">The gate every request passes: <code>AutoApprovalService</code> scores it, and the 0.85 threshold decides its path. Decided requests are persisted through the repository into H2.</figcaption>
+  </figure>
+
+  <h2>The layers, and why they're strict</h2>
+  <ul>
+    <li><strong>Web</strong> (<code>com/portal/priorauth/web/PriorAuthController.java</code> + DTO records) — validates input, maps to <code>AuthResponse</code>, never touches the database. Errors go through <code>GlobalExceptionHandler</code>.</li>
+    <li><strong>Service</strong> (<code>com/portal/priorauth/service/PriorAuthService.java</code>) — orchestrates: create, score, persist, and the reviewer's decide flow.</li>
+    <li><strong>Rules engine</strong> (<code>com/portal/priorauth/service/AutoApprovalService.java</code>) — pure and deterministic: base 0.90, minus penalties (review-required service −0.20, units &gt; 10 −0.15, blank diagnosis −0.10), clamped, compared to <code>AUTO_APPROVE_THRESHOLD = 0.85</code>.</li>
+    <li><strong>Domain</strong> (<code>com/portal/priorauth/domain/PriorAuthRequest.java</code>) — the entity mutates only through <code>applyDecision(...)</code>; the lifecycle is SUBMITTED → APPROVED | PENDING_REVIEW → (reviewer) APPROVED | DENIED.</li>
+  </ul>
+  <p>These boundaries aren't ceremony — they're what makes AI work <em>reviewable</em>. When every bolt's output must fit a known shape, validation checkpoints are fast.</p>
+
+  <h2>Run it now</h2>
+  <div class="snippet">
+    <div class="snippet__cap">terminal</div>
+    <pre class="code code--term"><code><span class="p">$</span> cd labs/priorauth-service
+<span class="p">$</span> mvn spring-boot:run
+<span class="p">$</span> curl localhost:8080/api/v1/prior-auth   <span class="c"># three seeded requests</span></code></pre>
+  </div>
+  <p>The seed data shows all three paths: a routine visit (auto-approved at 0.90), an MRI (0.70, review), and a 24-unit therapy request (0.75, review).</p>
+
+  <div class="callout callout--key">
+    <div class="callout__label">One deliberate gap</div>
+    <p>There is <strong>no appeals endpoint</strong>. A denied request is currently a dead end. That gap is intentional — it's the intent for your first full construction bolt in Module 10.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m06">
+  <p class="lede">Your first bolt is deliberately tiny — a <b>micro-bolt of pure understanding</b>. The intent isn't code; it's a validated mental model of the codebase. This is also your first practice at the discipline that makes AI-DLC safe: checking an AI's confident explanation against the source.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As a team new to this codebase, we want an accurate architecture summary and a trace of one request's full journey, so that we can plan future bolts on real understanding rather than guesses.</p>
+  </div>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>A one-page architecture summary: layers, key classes, and how they depend on each other.</li>
+    <li>A step-by-step trace of a submitted MRI request (service code <code>70551</code>) from HTTP to database.</li>
+    <li>Every claim in both artifacts spot-checked against the actual source.</li>
+  </ol>
+
+  <h2>Run the bolt, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">prompts, in order</div>
+        <pre class="code"><code>1. Summarize this service's architecture: layers, key classes,
+   dependencies between them. One page, no code.
+
+2. Trace a POST of an MRI request (serviceCode 70551) step by step:
+   every class and method it passes through, and what the final
+   stored state is. Cite file names.</code></pre>
+      </div>
+      <p>Claude Code reads the repo (and <code>CLAUDE.md</code>) itself. Notice how citing file names in the prompt forces checkable output.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>In Copilot Chat, use workspace context and the same two asks:</p>
+      <div class="snippet">
+        <pre class="code"><code>@workspace Summarize the architecture of this service...
+@workspace Trace a POST of an MRI request (serviceCode 70551)...</code></pre>
+      </div>
+      <p>You can also open <code>AutoApprovalService.java</code> and use inline chat's <code>/explain</code> on the scoring method for a focused explanation.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>The trace should say, in effect: controller validates the DTO → <code>PriorAuthService.submit(...)</code> builds the entity → <code>AutoApprovalService.score(...)</code> returns 0.70 (0.90 − 0.20 for a review-required service) → below 0.85, so <code>applyDecision</code> sets PENDING_REVIEW → repository saves it. If either tool claims anything else — an extra layer, a different score — that's your validation checkpoint doing its job.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>Open each cited file and confirm the named methods exist as described.</li>
+    <li>Recompute the MRI score by hand from the penalties in <code>AutoApprovalService</code>.</li>
+    <li>Anything the summary got wrong or invented is written down — that list is gold for Module 7.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p>Run the app, POST the MRI request from the README's curl examples, and confirm the stored status and score match the trace. The explanation isn't validated until the running system agrees with it.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m07">
+  <p class="lede">In Bolt 0 you validated what the AI knew — and caught what it guessed. Now make that knowledge <b>permanent</b>. AI-DLC's answer to session amnesia is <em>persistent context</em>: the project's decisions, conventions, and sharp edges live in the repository, so every session and every teammate's AI starts already informed.</p>
+
+  <h2>The two files that carry it here</h2>
+  <p>This repo ships persistent context for both engines, and they're worth reading side by side:</p>
+  <ul>
+    <li><strong><code>CLAUDE.md</code></strong> (repo root of the service) — read automatically by Claude Code at launch. It carries the app's purpose, the layering diagram, the conventions ("never expose JPA entities", "mutate only through <code>applyDecision</code>"), the 0.85 rule, build commands, and known gotchas.</li>
+    <li><strong><code>.github/copilot-instructions.md</code></strong> — the same essentials in Copilot's format, applied repo-wide to chat and suggestions.</li>
+  </ul>
+  <p>Same knowledge, two consumers. Keep them roughly in sync — a convention that exists in only one file will be honored by only one tool.</p>
+
+  <h2>What belongs in persistent context</h2>
+  <ul>
+    <li><strong>What the app is</strong> — two sentences of purpose, so output fits the domain.</li>
+    <li><strong>Hard conventions</strong> — the rules a reviewer would reject a change for breaking. These pay the highest rent.</li>
+    <li><strong>The business invariants</strong> — here, the 0.85 threshold and the status lifecycle. An AI that knows the invariant protects it; one that doesn't will happily "improve" it away.</li>
+    <li><strong>How to build and test</strong> — so the AI can validate its own work before you do.</li>
+    <li><strong>Decisions from elaboration</strong> — when a mob session answers a clarifying question ("appeals reuse PENDING_REVIEW"), the answer goes <em>in the file</em>, not just in someone's memory. This is the AI-DLC habit that compounds.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The test of good context</div>
+    <p>Ask: "if a competent contractor read only this file, would their first pull request fit our codebase?" If yes, your AI's first draft will too. Everything you caught the AI guessing in Bolt 0 is a candidate line for these files.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">What never goes in</div>
+    <p>These files are committed and travel with the repo. No secrets, no tokens, no member or provider data — ever. Guardrails get a full module later; the rule starts now.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Add one line to the service's <code>CLAUDE.md</code> that would have prevented the worst guess you caught in Bolt 0. Then re-ask the same question in a fresh session and watch the difference. That loop — validate, persist, improve — is AI-DLC in miniature. Next: your first full construction bolt.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m10">
+  <p class="lede">This is your first <b>full bolt</b>: intent in, working validated software out, in one sitting. You'll run the entire AI-DLC loop — state intent, let the AI elaborate it into a plan <em>and questions</em>, validate as a team, supervise construction, and sign off at the checkpoint. The feature is the gap you found in Module 5: denied requests are a dead end.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As a provider, when my request is denied, I can file one appeal with a reason, so that the request gets a second human review instead of being a dead end.</p>
+  </div>
+
+  <h2>Elaboration — the Mob Elaboration beat</h2>
+  <p>Don't jump to code. Hand the intent to the AI and ask it to elaborate:</p>
+  <div class="snippet">
+    <div class="snippet__cap">elaboration prompt (either tool)</div>
+    <pre class="code"><code>Here is a feature intent for this service: "A provider can file one
+appeal with a reason against a DENIED request; it then gets a second
+human review." Before writing any code, propose an implementation plan
+and ask me every clarifying question you need answered first.</code></pre>
+  </div>
+  <p>A good elaboration comes back with a plan <em>and</em> questions like these — and answering them together, on the record, is the ritual. Here are the questions a strong elaboration surfaces, with the answers this team decided:</p>
+  <ul>
+    <li><em>"Should an appeal introduce a new status, or reuse PENDING_REVIEW?"</em> — <strong>Reuse PENDING_REVIEW.</strong> The reviewer flow already exists; keep the enum stable this bolt.</li>
+    <li><em>"How do we enforce 'one appeal only'?"</em> — <strong>Add an <code>appealedAt</code> timestamp</strong> to <code>com/portal/priorauth/domain/PriorAuthRequest.java</code>; a second appeal is rejected with 409.</li>
+    <li><em>"Is the reason required, and where is it stored?"</em> — <strong>Required</strong> (validated, max 500 chars), recorded via the existing <code>decisionReason</code> on the transition.</li>
+  </ul>
+  <div class="callout callout--key">
+    <div class="callout__label">Persist the decisions</div>
+    <p>Those three answers go into the service's <code>CLAUDE.md</code> before construction starts. That's persistent context doing its job: the next bolt's AI won't re-ask.</p>
+  </div>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li><code>POST /api/v1/prior-auth/{id}/appeal</code> with a required <code>reason</code> moves a DENIED request to PENDING_REVIEW and sets <code>appealedAt</code>.</li>
+    <li>Appealing a request that isn't DENIED, or appealing twice, returns 409 with a clear message.</li>
+    <li>A missing/blank reason returns 400 via the existing validation path.</li>
+    <li>The change respects the layering: controller → service → <code>applyDecision</code>-style state change; entity exposed only as <code>AuthResponse</code>.</li>
+    <li>Tests cover the happy path and both 409 cases; <code>mvn test</code> is green.</li>
+  </ol>
+
+  <h2>Construction, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">construction prompt</div>
+        <pre class="code"><code>Implement the appeals feature per the plan we validated:
+- appealedAt field on PriorAuthRequest, a domain method for the
+  appeal transition, service method, POST /{id}/appeal endpoint,
+  AppealRequest DTO with a required reason (max 500 chars)
+- 409 for non-DENIED or second appeals, 400 for a blank reason
+- tests for the happy path and both conflict cases
+Show me the plan of file changes first; wait for my go before editing.</code></pre>
+      </div>
+      <p>That last line is the checkpoint. Review the proposed file list — it should touch the domain entity, <code>PriorAuthService</code>, the controller, a new DTO, and a test — approve it, then let it build and run the tests itself.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>Copilot works best here in smaller supervised steps: use Copilot Chat (with <code>@workspace</code>) to draft the domain method and service method from the validated plan, accept and adjust the ghost-text completions for the controller endpoint and DTO, then ask Chat to generate the three tests. Same plan, same criteria — you're the one holding the sequence.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>Roughly: a new <code>appeal(String reason)</code> transition on the entity (guarding status and <code>appealedAt</code>), a service method that loads, appeals, and saves, a thin controller mapping to <code>AuthResponse</code>, and a small test class. Shapes will vary — what must not vary is the criteria.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>State changes go through a guarded domain method — no stray setters.</li>
+    <li>The controller stays thin and returns <code>AuthResponse</code>, never the entity.</li>
+    <li>Error paths use the existing <code>GlobalExceptionHandler</code> shapes (409/400).</li>
+    <li>Tests actually assert the transitions, not just status codes.</li>
+    <li><code>CLAUDE.md</code> now records the three elaboration decisions.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <pre class="code code--term"><code><span class="p">$</span> mvn test
+<span class="p">$</span> mvn spring-boot:run
+<span class="c"># deny a pending request (id 2 from seed data), then appeal it:</span>
+<span class="p">$</span> curl -X POST localhost:8080/api/v1/prior-auth/2/decision \
+    -H "Content-Type: application/json" \
+    -d '{"decision":"DENIED","reason":"insufficient documentation"}'
+<span class="p">$</span> curl -X POST localhost:8080/api/v1/prior-auth/2/appeal \
+    -H "Content-Type: application/json" \
+    -d '{"reason":"clinical notes attached on resubmission"}'
+<span class="c"># expect PENDING_REVIEW; a second appeal must return 409</span></code></pre>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">The bolt, in review</div>
+    <p>Clock the whole thing. Most teams land this bolt in well under an hour — and notice where the time actually went: not typing, but elaboration and validation. That's the AI-DLC trade working as designed.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m11">
+  <p class="lede">Not every bolt ships a feature. This one ships <b>certainty</b>: the intent is that the rules engine — the highest-stakes code in the service — is fully specified by tests. Quality bolts like this are what make later refactoring and bug-fix bolts fast and safe.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As a team, we want <code>AutoApprovalService</code> completely pinned down by a readable test suite, so that any future change to scoring that alters behavior fails loudly.</p>
+  </div>
+
+  <h2>Elaboration — let the AI propose the test plan</h2>
+  <div class="snippet">
+    <div class="snippet__cap">elaboration prompt</div>
+    <pre class="code"><code>Read AutoApprovalService. Propose a complete test plan for it as a
+table of cases (inputs, expected score, expected routing) before
+writing any tests. Flag anything about the current rules that makes
+them hard to test.</code></pre>
+  </div>
+  <p>Two things a good elaboration surfaces here — and the team's rulings:</p>
+  <ul>
+    <li><em>"Each penalty needs isolation and at least one stacking case."</em> — <strong>Agreed.</strong> Four single-factor rows, one stacked row (MRI + high units → 0.55), one clamp sanity check.</li>
+    <li><em>"No current input can score exactly 0.85, so the <code>&gt;=</code> boundary is untestable through real requests."</em> — This is elaboration earning its keep: a genuine gap in the rules, found before a line of test code. <strong>Ruling:</strong> document the boundary semantics with a direct comparison test against the constant, and record in <code>CLAUDE.md</code> that any future penalty summing to a 0.85 score must auto-approve.</li>
+  </ul>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>A parameterized test (<code>@ParameterizedTest</code> + <code>@CsvSource</code>) covers: routine (0.90), MRI (0.70), units &gt; 10 (0.75), blank diagnosis (0.80), and the stacked case (0.55).</li>
+    <li>Routing is asserted alongside score: which cases auto-approve, which go to review.</li>
+    <li>The <code>&gt;=</code> threshold semantics are pinned by an explicit boundary test.</li>
+    <li><code>explain(...)</code> has at least one test proving the message matches the outcome.</li>
+    <li>Suite is green and each row is readable as a specification.</li>
+  </ol>
+
+  <h2>Construction, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">construction prompt</div>
+        <pre class="code"><code>Implement the validated test plan in AutoApprovalServiceTest using
+JUnit 5, AssertJ, and @ParameterizedTest with @CsvSource. Keep the
+existing routine-visit test. Run mvn test and show me the result.</code></pre>
+      </div>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>Open <code>AutoApprovalServiceTest.java</code>, paste the validated case table as a comment, and let ghost text build the parameterized test under it — Copilot is excellent at completing test tables. Use Chat for the boundary and <code>explain(...)</code> tests, then run <code>mvn test</code> yourself.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>One tidy parameterized method whose CSV rows read like a spec ("70551, 1, M54.5 → 0.70, PENDING_REVIEW"), plus two focused tests for the boundary semantics and the explanation text.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>Recompute two rows by hand from the penalty constants — never trust generated expected values unchecked.</li>
+    <li>Temporarily change a penalty and confirm the suite fails; revert. A spec that can't fail specifies nothing.</li>
+    <li>The elaboration finding about the unreachable 0.85 score is recorded in <code>CLAUDE.md</code>.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p><code>mvn test</code> green, and the mutation check above red-then-green. This suite is now the safety net the next two bolts stand on.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m12">
+  <p class="lede">A defect bolt. The product owner's spec and the code disagree by exactly one unit — the kind of quiet boundary bug that ships for months. The AI-DLC move: make the disagreement <b>fail as a test first</b>, then let the AI fix code it can't argue with.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>The utilization policy says requests of <strong>10 or more units</strong> draw extra scrutiny. Reviewers report that 10-unit requests are sailing through auto-approval. Find it, prove it, fix it — without breaking anything else.</p>
+  </div>
+
+  <h2>Elaboration — reproduce before you touch anything</h2>
+  <div class="snippet">
+    <div class="snippet__cap">elaboration prompt</div>
+    <pre class="code"><code>Policy: requests of 10 or more units get the high-units penalty.
+Reviewers say 10-unit requests are auto-approving. Before changing any
+code: locate the likely cause, and write a failing test that proves
+the bug as stated.</code></pre>
+  </div>
+  <p>The AI should find the off-by-one — <code>request.getRequestedUnits() &gt; HIGH_UNIT_THRESHOLD</code> penalizes 11+, not 10+ — and propose a test asserting a 10-unit request scores 0.75. Team ruling to record: <strong>the spec is authoritative</strong> ("10 or more"), so the fix is <code>&gt;=</code>, and the Module 11 row for units must be updated in the same change.</p>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>A new test with a 10-unit request fails <em>before</em> the fix (red) with score 0.90 vs expected 0.75.</li>
+    <li>The comparison becomes <code>&gt;=</code>; the constant's meaning is made unmistakable in name or comment.</li>
+    <li>The full suite — including Module 11's table, updated for the 10-unit row — is green after.</li>
+    <li>No other behavior changes: 9-unit requests still score 0.90.</li>
+  </ol>
+
+  <h2>Construction, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">the red-first sequence</div>
+        <pre class="code"><code>1. Add the failing 10-unit test only. Run mvn test - show me the red.
+2. Now make the minimal fix in AutoApprovalService and update any test
+   rows the spec change affects. Run mvn test - show me the green.</code></pre>
+      </div>
+      <p>Insisting on seeing the red first is the checkpoint. A fix without a preceding failure proves nothing.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>Write the failing test yourself with ghost-text help (it's three lines), run <code>mvn test</code> to see red, then ask Copilot Chat for the minimal fix and the affected test-row updates. Same sequence, you drive the runner.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>A one-character production change (<code>&gt;</code> → <code>&gt;=</code>), a clarified constant, one new boundary test, one updated table row. Small diff, high confidence — the signature of a good defect bolt.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>You personally saw the test red before the fix and green after.</li>
+    <li>The diff touches nothing beyond the boundary and its tests.</li>
+    <li>9 units still passes clean — the fix didn't overreach.</li>
+    <li>The spec ruling ("10 or more") is recorded in <code>CLAUDE.md</code>.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p><code>mvn test</code> green, then live: submit a 10-unit request via curl and confirm it lands in PENDING_REVIEW at 0.75.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m13">
+  <p class="lede">The rules engine works and is fully tested — now it needs room to grow. This is a <b>refactoring bolt in Mob Construction style</b>: the AI proposes the design, the team resolves the technical decisions in real time, and the Module 11 suite keeps everyone honest while the structure changes underneath it.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>New scoring factors are coming (network status, prior denials). Restructure <code>AutoApprovalService</code> so each factor is a small, named, individually testable rule — with zero behavior change.</p>
+  </div>
+
+  <h2>Elaboration — design proposals, team decisions</h2>
+  <div class="snippet">
+    <div class="snippet__cap">elaboration prompt</div>
+    <pre class="code"><code>Propose a refactoring of AutoApprovalService toward composable rules:
+an interface, how rules compose into the score, how explain() reports
+which rules fired. Two design options with trade-offs. No code yet.</code></pre>
+  </div>
+  <p>Typical fork the AI presents, and the mob's rulings:</p>
+  <ul>
+    <li><em>"Rule as a penalty supplier vs a score transformer?"</em> — <strong>Penalty supplier:</strong> a <code>ScoringRule</code> with a name and a penalty-for-request method. Simpler to test, sums transparently from the 0.90 base.</li>
+    <li><em>"Spring-injected rule beans vs a plain list in the service?"</em> — <strong>Plain list, constructed in the service.</strong> Keeps the engine pure and framework-free, per the repo convention.</li>
+    <li><em>"May explain() text change?"</em> — <strong>Outcome semantics no; wording may improve.</strong> Update the Module 11 explain test only if wording shifts.</li>
+  </ul>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>Each existing penalty becomes a named rule; the service iterates the rules to score.</li>
+    <li><code>AUTO_APPROVE_THRESHOLD</code> stays public and unchanged; the engine stays pure (no I/O).</li>
+    <li>The entire Module 11 table passes <strong>unmodified</strong> — the proof of zero behavior change.</li>
+    <li>Each rule gains one focused unit test of its own.</li>
+    <li><code>explain(...)</code> can name the rules that fired.</li>
+  </ol>
+
+  <h2>Construction, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">construction prompt</div>
+        <pre class="code"><code>Implement the penalty-supplier design we validated. Work in steps:
+extract one rule at a time, running mvn test after each extraction.
+Stop and show me if any existing test needs to change.</code></pre>
+      </div>
+      <p>"Stop if a test needs to change" is the tripwire — in a zero-behavior-change bolt, a failing old test means the design drifted, and that's a mob decision, not the AI's.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>Drive the extraction yourself with Copilot accelerating each step: create the <code>ScoringRule</code> interface, then extract rules one at a time — ghost text will draft each rule class from the original condition. Run <code>mvn test</code> between extractions; use Chat to generate the per-rule unit tests at the end.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>A small <code>ScoringRule</code> interface, three rule classes (review-required service, high units, blank diagnosis), a slimmer <code>AutoApprovalService</code> that folds penalties from its rule list, and three new focused tests — with the original table green throughout.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>The Module 11 table passed at every step, unmodified.</li>
+    <li>No Spring or I/O crept into the engine.</li>
+    <li>Adding a hypothetical fourth rule would now be a one-class change — the intent, achieved.</li>
+    <li>The design rulings are recorded in <code>CLAUDE.md</code>.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p><code>mvn test</code> fully green, then a live spot check: the seeded MRI request still lands at 0.70 / PENDING_REVIEW. Structure changed; behavior provably didn't.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m14">
+  <p class="lede">Four bolts in, you've noticed where AI-DLC actually spends human effort: the <b>checkpoints</b>. Validation is the load-bearing wall of the whole methodology — so it deserves its own craft. This module is that craft, for the two artifacts you validate most: proposed plans and produced code.</p>
+
+  <h2>Checkpoint one: the plan, before construction</h2>
+  <p>Cheapest place to catch problems. Before approving any AI-proposed plan, ask four questions:</p>
+  <ul>
+    <li><strong>Scope</strong> — does the file list match the intent? A plan that touches ten files for a one-endpoint feature is telling you something.</li>
+    <li><strong>Invariants</strong> — does anything brush a business rule (here: the 0.85 threshold, the status lifecycle)? Those changes need explicit mob sign-off, never incidental inclusion.</li>
+    <li><strong>Assumptions</strong> — what did the AI decide that nobody actually answered? Unasked clarifying questions resurface here as silent assumptions.</li>
+    <li><strong>Verifiability</strong> — how will this be proven? A plan without a test-and-run story isn't a plan yet.</li>
+  </ul>
+
+  <h2>Checkpoint two: the code, before it merges</h2>
+  <p>Reviewing AI code is reviewing a fast, well-read author with no stake in being right. Priorities, in order: <strong>correctness against the criteria</strong> (recompute one expected value by hand — generated tests can encode generated mistakes); <strong>invariants and conventions</strong> (state changes via guarded methods, entities never over the wire, layering intact); <strong>invented APIs</strong> (any method you don't recognize gets an open-the-source check — this is where confident errors hide); <strong>the tests test something</strong> (would they fail if the behavior broke? Module 11's mutation trick works everywhere).</p>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The asymmetry to internalize</div>
+    <p>AI produces in minutes what takes an hour to validate well — so <em>validation attention is the scarce resource</em> in AI-DLC, and everything in this course that reduces its cost compounds: tight persistent context (fewer convention errors to catch), strong suites (mechanical proof instead of squinting), and small bolts (small diffs review honestly; nobody reviews 2,000 lines well).</p>
+  </div>
+
+  <h2>Validation in both directions</h2>
+  <p>The review lens points both ways. Before requesting a teammate's checkpoint, run the AI over your own change — <em>"review this diff against CLAUDE.md; list problems by severity"</em> — and arrive pre-reviewed. In the automation track you'll make this structural: a review subagent with your standards baked in, and PR-time review that runs on every pull request automatically.</p>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">The failure mode to name out loud</div>
+    <p>Checkpoint fatigue. When every artifact arrives plausible and well-formatted, approval drifts toward a reflex — and a rubber-stamp checkpoint is worse than none, because it launders unreviewed work as reviewed. The countermeasures are structural, not moral: keep bolts small, rotate who validates, and require the validator to <em>run</em> something, not just read it.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Take the four plan questions into your next bolt as a literal checklist. Next: zooming out from one bolt to how a whole team runs Inception — Mob Elaboration in full.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m15">
+  <p class="lede">You've run the elaboration beat inside single bolts. <b>Mob Elaboration</b> is that beat at full scale: AI-DLC's Inception ritual, where a business intent becomes validated requirements and right-sized units of work — with the whole cross-functional team in the room, answering the AI's questions together.</p>
+
+  <h2>Why a mob, not a document</h2>
+  <p>Traditional inception serializes: the PM writes, the analyst refines, engineering estimates, questions bounce through tickets for weeks. Mob Elaboration collapses that into hours because the AI drafts instantly and the people who hold the answers — product, engineering, QA, sometimes compliance — are present to give them <em>as the questions surface</em>. The AI's clarifying questions become the meeting agenda; ambiguity gets resolved at conversation speed instead of ticket speed. And the questions are often ones the team hadn't settled among themselves — the ritual surfaces internal disagreement early, which is half its value.</p>
+
+  <h2>The mechanics of a session</h2>
+  <ul>
+    <li><strong>Input:</strong> a written intent, a sentence or a paragraph ("providers need a self-service appeals flow with an audit trail").</li>
+    <li><strong>Round 1 — elaborate:</strong> the AI proposes requirements and asks its questions. A facilitator drives; the mob answers aloud; a scribe (or the AI itself) records each ruling.</li>
+    <li><strong>Round 2 — decompose:</strong> the AI proposes units of work from the validated requirements. The team resizes: each unit should be deliverable in a bolt or a few — "appeal submission endpoint" is a unit; "rebuild the portal" is not.</li>
+    <li><strong>Output:</strong> validated requirements, sized units, and — critically — every ruling persisted to the repo (<code>CLAUDE.md</code> or a decisions file). Inception's product isn't a backlog; it's <em>context</em>.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The sizing test for a unit of work</div>
+    <p>Can the team state its acceptance criteria in one screen, and can a bolt deliver it with a real validation checkpoint at the end? If criteria sprawl, split the unit. If a unit is all judgment and no construction, it's a decision to make in the mob, not a unit to schedule.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">The honest cost</div>
+    <p>Mob sessions concentrate senior attention: four people for an afternoon is real money, and it's the price of the speed. Budget it deliberately — crisp facilitation, timeboxed rounds, decisions recorded once — rather than discovering it in calendar pain. Faster in calendar time, yes; cheaper in senior attention, no.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Try it small</div>
+    <p>Run a 30-minute Mob Elaboration on a real intent from your own backlog: one facilitator, the elaboration prompt from Module 10, the team answering aloud. Compare the questions the AI asks with the ones your last refinement meeting produced.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m16">
+  <p class="lede">Bolts are fast, and fast cuts both ways: good decisions ship in hours, and so would bad ones. This module draws the hard lines — the places AI doesn't go, no matter how smooth the loop feels — for a team working in a regulated healthcare domain.</p>
+
+  <h2>Data that never enters a prompt or a context file</h2>
+  <ul>
+    <li><strong>Secrets:</strong> credentials, tokens, connection strings. Not in prompts, not in <code>CLAUDE.md</code>, not in workflow YAML — CI secrets live in the secret store, which is exactly what <code>/install-github-app</code> sets up.</li>
+    <li><strong>PHI and member data:</strong> real member IDs, provider NPIs, diagnoses tied to people. The labs use synthetic data (<code>MBR-1001</code>) by design; production debugging with AI must use the same discipline — redact or synthesize before you paste.</li>
+    <li><strong>The quiet leak path:</strong> logs and stack traces pasted into chat. A "harmless" exception dump can carry a member ID in a field name. The security-reviewer subagent in this repo exists partly to catch data escaping into logs at all.</li>
+  </ul>
+
+  <h2>Work that stays human-led</h2>
+  <p>AI-DLC says AI proposes and humans approve — but some proposals shouldn't be delegated to a first draft at all:</p>
+  <ul>
+    <li><strong>Security-sensitive code</strong> (authn/authz, crypto, session handling): AI may review and explain; a human writes or line-by-line owns the implementation.</li>
+    <li><strong>The business invariants themselves:</strong> the 0.85 threshold is a clinical-financial policy decision. AI can implement a change to it; only the accountable humans can decide it.</li>
+    <li><strong>Anything you couldn't explain to an auditor:</strong> in a regulated domain, "the AI generated it and tests passed" is not a control. Every merged change needs a human who can narrate what it does and why.</li>
+  </ul>
+
+  <h2>Containing confident errors</h2>
+  <p>You've met hallucinations in the bolts; at team scale the containment is structural: invented APIs die at compile time (one reason typed, compiled Java is friendly ground for AI work); invented <em>behavior</em> dies at the test checkpoint; invented <em>facts about your domain</em> die only if persistent context states the truth — which is why recording rulings isn't housekeeping, it's a safety control.</p>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The team's one-line policy</div>
+    <p>Write it down and put it in onboarding: <em>synthetic data in prompts, secrets in stores, invariants decided by humans, and no merge without a human who can explain it.</em> Everything else in this module is elaboration of that line.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Check your org's actual obligations</div>
+    <p>This module teaches engineering discipline, not compliance advice. HIPAA and your org's agreements with AI vendors (what data may be sent, what's retained, what's trained on) are questions for your security and legal teams — ask them <em>before</em> the pilot, not after.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m17">
+  <p class="lede">Your planning rituals were built for a world where typing was the constraint. In AI-DLC the constraint moved — to elaboration and validation attention — and estimation, pointing, and Definition of Done all shift with it.</p>
+
+  <h2>What happens to estimation</h2>
+  <p>Story points mostly encoded implementation effort: how much code, how gnarly. In bolts, implementation is fast and roughly constant — what varies is <strong>ambiguity</strong> (how much elaboration before criteria are validated?) and <strong>validation load</strong> (how much senior attention will the checkpoint consume?). Teams that keep pointing find the scale quietly re-anchoring to those two axes; teams that drop it often plan by <em>counting bolts</em> instead — "this unit of work looks like three bolts" — which stays honest because a bolt has a fixed shape: one intent, one loop, one checkpoint.</p>
+
+  <h2>What happens to the sprint's rhythm</h2>
+  <p>The two-week container assumed work needed two weeks. With bolts closing in hours or a day, the cadence inverts: <strong>planning</strong> becomes Mob Elaboration sessions scheduled when a unit of work is ready, not on a calendar fortnight; <strong>standup</strong> stops reporting typing progress ("still implementing") because there mostly isn't any — it reports checkpoint state ("awaiting validation", "elaboration surfaced a policy question"); <strong>retro</strong> gains a new core question: <em>where did validation attention actually go, and was it well spent?</em></p>
+
+  <h2>Definition of Done, extended</h2>
+  <p>Everything in your current DoD survives. AI-DLC appends its own clauses — for this course's repo, a bolt is done when:</p>
+  <ul>
+    <li>the acceptance criteria the mob validated are demonstrably met (tests + a live run, not just green CI);</li>
+    <li>a named human validated the diff and can explain it — the Module 16 auditability line;</li>
+    <li>elaboration rulings from the bolt are persisted to <code>CLAUDE.md</code> / the decisions file;</li>
+    <li>the automated first-pass review (the subagent or PR workflow) ran and its findings were addressed or explicitly waived.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The metric that matters now</div>
+    <p>Velocity charts measured typing throughput, and typing is no longer scarce. Watch instead: <strong>elaboration-to-ship time per unit of work</strong>, <strong>validation attention per bolt</strong> (who, how long), and <strong>escape rate</strong> (defects past checkpoints). Those three tell you whether the methodology is working; a rising bolt count alone tells you nothing.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Take one unit of work from your real backlog and re-estimate it in bolts, tagging each with expected ambiguity and validation load. Notice how different the conversation is from pointing poker — that conversation is the new planning.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m18">
+  <p class="lede">You have the methodology, the codebase skills, and the guardrails. The last team-scale question is sequencing: how does a real sprint team actually <b>get from here to there</b> without betting the roadmap on it?</p>
+
+  <h2>A staged rollout that survives contact with reality</h2>
+  <ol class="criteria">
+    <li><strong>Ready the ground (a week, part-time).</strong> Make the repo AI-ready — persistent context, tests, the review subagent, PR automation (the whole automation track). Rolling out AI-DLC on a context-free, test-poor repo multiplies every risk.</li>
+    <li><strong>Pilot one unit of work.</strong> Pick something real but severable — an appeals-flow-sized feature, not the billing rewrite. Run it fully: Mob Elaboration, bolts, checkpoints, DoD. The goal is a complete experience of the loop, not a big win.</li>
+    <li><strong>Retro on the mechanism, not just the outcome.</strong> Where did elaboration drag? Which checkpoints felt real, which felt rubber-stamp? What did validation attention cost? Fix the loop before scaling it.</li>
+    <li><strong>Name champions and pair deliberately.</strong> One or two people who ran the pilot pair through the next units with everyone else. Facilitating a mob session and validating well are learned by doing-alongside, not by slide deck.</li>
+    <li><strong>Scale by unit of work, not by mandate.</strong> Routine construction moves to bolts first; security-sensitive and invariant-touching work migrates last, per the Module 16 lines. "All work is AI-DLC by Q3" is how methodologies die.</li>
+  </ol>
+
+  <h2>The predictable objections, taken seriously</h2>
+  <ul>
+    <li><em>"This deskills us."</em> Partly backwards: typing throughput matters less; design judgment, domain understanding, and validation skill matter <em>more</em> — and juniors need a deliberate path (pairing at checkpoints, owning elaboration for small units) so they build judgment without the old apprenticeship-by-typing.</li>
+    <li><em>"The mob sessions are expensive."</em> True — say so upfront (Module 15's honest cost) and show the ledger: hours of concentrated attention against weeks of serialized ticket-lag. If the ledger doesn't favor it for a given unit of work, don't use the mob for that unit.</li>
+    <li><em>"Vendor numbers promise 10–15x."</em> Treat them as Module 1 taught: directionally interesting, unverified in your context. Your pilot's own elaboration-to-ship and escape-rate numbers are the only ones worth repeating internally.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The one thing to protect</div>
+    <p>Checkpoint integrity. Every pressure of scaling — deadlines, fatigue, enthusiasm — pushes toward faster approvals. The rollout succeeds or fails on whether "validated" keeps meaning <em>a named human ran it and can explain it</em>. Protect that, and the rest is adjustable.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Draft your pilot on one page: the unit of work, the mob roster, the DoD, and the three metrics you'll actually track. That page is your rollout plan. Next: the leadership track — the scoreboard you'll be judged on, how to make it move, and how to prove it.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m28">
+  <p class="lede">The Portal grows a face. <b>labs/priorauth-web</b> is a small React app where a provider submits requests, watches status, and files appeals — against the exact API you've been building on all course. New stack, same discipline: this module is the tour, and the next three modules are its bolts.</p>
+
+  <h2>What's in the repo</h2>
+  <div class="snippet">
+    <div class="snippet__cap">labs/priorauth-web — the shape of the app</div>
+    <pre class="code"><code>priorauth-web/
+├─ CLAUDE.md                        ← persistent context (Claude Code)
+├─ .github/copilot-instructions.md  ← persistent context (Copilot)
+├─ vite.config.js                   ← dev server + /api proxy + test setup
+└─ src/
+   ├─ App.jsx                       ← shell: header + the one page so far
+   ├─ api/priorAuth.js              ← the ONLY file that talks HTTP
+   ├─ components/
+   │  ├─ RequestList.jsx            ← fetch, filter by status, render table
+   │  ├─ StatusBadge.jsx            ← pure: status in, colored badge out
+   │  └─ StatusBadge.test.jsx       ← one starter test (Vitest + RTL)
+   └─ test/setup.js</code></pre>
+  </div>
+  <p>Stack: <b>React 19 + Vite</b>, plain JavaScript, no router, no state library — deliberately small, because the course is about the workflow, not the framework. Tests run on <b>Vitest + React Testing Library</b>. To run it, start the service first (<code>mvn spring-boot:run</code>), then <code>npm install &amp;&amp; npm run dev</code> and open <code>localhost:5173</code>.</p>
+
+  <h2>One boundary, one direction</h2>
+  <div class="snippet">
+    <div class="snippet__cap">the layering — the front-end mirror of the service's rule "controllers are thin"</div>
+    <pre class="code"><code>App.jsx → components/* → api/priorAuth.js → fetch → /api/v1/prior-auth</code></pre>
+  </div>
+  <p>Two conventions carry the whole architecture. First: <b>components never call <code>fetch</code></b> — every request goes through <code>src/api/priorAuth.js</code>, so the API contract lives in one file and errors are handled once (the client parses the service's RFC&nbsp;7807 <code>ProblemDetail</code> and throws an <code>ApiError</code> whose message is safe to show a user). Second: the Vite dev server <b>proxies <code>/api</code> to port 8080</b>, so the browser sees a single origin and nobody writes CORS config on either side.</p>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The rules stay on the server</div>
+    <p>The UI displays <code>approvalScore</code> and <code>decisionReason</code> — it never re-computes them. The 0.85 threshold has exactly one home: <code>AutoApprovalService</code>. A front-end that re-implements business rules is a bug factory with two sources of truth; this convention is written into the repo's <code>CLAUDE.md</code>, so your AI teammate refuses the temptation too.</p>
+  </div>
+
+  <h2>Persistent context from day one</h2>
+  <p>In Module 22 you retrofitted an existing repo into an AI-ready one. This repo shows the alternative: it was <em>born</em> AI-ready. <code>CLAUDE.md</code> and <code>.github/copilot-instructions.md</code> shipped in the first commit, carrying the conventions above plus the gotchas (H2 resets on restart, NPI must be 10 digits, <code>approvalScore</code> is null until scored). Every elaboration decision your team makes in the coming bolts gets recorded there — that's the AI-DLC habit: decisions persist in the repo, not in chat history.</p>
+
+  <h2>What's deliberately missing</h2>
+  <p>Like the service (which shipped without an appeals endpoint), this app has <b>intentional gaps</b>, and they are precisely this track's bolts:</p>
+  <ul>
+    <li><b>No "New request" form</b> — the next module builds it against <code>POST /api/v1/prior-auth</code>.</li>
+    <li><b>No appeal flow</b> — the module after wires the UI to the appeals endpoint you built in Module 10.</li>
+    <li><b>One lonely test</b> — the last lab grows it into a suite that locks the portal's behavior.</li>
+  </ul>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Try it now</div>
+    <p>Start the service, run <code>npm install &amp;&amp; npm run dev</code> in <code>labs/priorauth-web</code>, and open the portal. You should see the three seeded requests — one approved at 0.90, two pending review. Then open the repo in Claude Code or VS Code and ask your assistant: <em>"What are this repo's conventions?"</em> Watch it answer from the context files.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m21">
+  <p class="lede">Be clear-eyed about why this migration is funded: <b>leadership wants measurable productivity improvement from AI tools</b>. That's the major factor. AI-DLC's pitch is exactly that — but a pitch isn't a number, and enthusiasm isn't evidence. This module builds the evidence machine: baseline, measure, and report in the language leadership actually budgets in.</p>
+
+  <h2>Why "it feels faster" fails upstairs</h2>
+  <p>Every team that adopts AI tools reports feeling faster within a week. Leadership has heard that before — about the last three tools — and what survives scrutiny is a comparison: <em>the same kind of work, before and after, measured the same way</em>. No baseline, no story. Which means the measurement starts <strong>before</strong> the pilot, not after it succeeds.</p>
+
+  <h2>Baseline first</h2>
+  <ol class="criteria">
+    <li>Pick 3–5 <strong>recently completed</strong> units of work comparable to your pilot (an appeals-flow-sized feature, a defect batch, a refactor).</li>
+    <li>For each, pull from your existing trackers: calendar cycle time (commitment → shipped), rough effort (person-days, including review), and escaped defects in the month after.</li>
+    <li>Write the numbers down <em>now</em>, dated, before anyone touches a bolt. Imperfect baselines beat retrofitted ones — retrofitted baselines convince nobody, least of all finance.</li>
+  </ol>
+
+  <h2>Translate the metrics leadership will fund</h2>
+  <p>Module 17 gave you the three operational metrics. Here's the same trio in leadership language, plus one adoption measure:</p>
+  <ul>
+    <li><strong>Elaboration-to-ship time</strong> → <em>time-to-market</em>: "comparable features shipped in X days versus a Y-day baseline."</li>
+    <li><strong>Validation attention per bolt</strong> → <em>true cost</em>: senior hours consumed per unit of work, alongside tooling spend. Report this honestly — it's the number skeptics will probe first, and volunteering it is what makes the rest credible.</li>
+    <li><strong>Escape rate</strong> → <em>quality</em>: defects past checkpoints versus baseline. Speed that ships rework isn't productivity, and leadership knows it.</li>
+    <li><strong>Coverage</strong> → <em>adoption</em>: the share of eligible units of work actually run as bolts. Gains only scale with coverage, and this number shows the runway.</li>
+  </ul>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Vanity metrics to refuse — even when asked</div>
+    <p>Lines of code generated, suggestion-acceptance percentages, seats active, bolt counts. They measure <em>activity</em>, not delivery, they're trivially gameable, and the first analyst who notices deflates your whole case. If a dashboard demands them, report them in an appendix — never as the headline.</p>
+  </div>
+
+  <h2>What independent research actually shows</h2>
+  <p>Come to leadership already knowing the literature — it's two-sided, and knowing both sides is what makes you credible:</p>
+  <ul>
+    <li><strong>Adoption and perception are sky-high.</strong> DORA's 2025 State of AI-assisted Software Development (≈5,000 professionals) found ~90% of developers using AI, with over 80% perceiving a productivity gain — while roughly 30% report little or no trust in AI-generated code. Its headline: <em>AI is an amplifier</em> — it magnifies strong teams and magnifies dysfunction; throughput rises, but delivery instability rises too where foundations are weak.</li>
+    <li><strong>Perception is not measurement.</strong> METR's 2025 randomized controlled trial put experienced open-source developers on real tasks in repos they knew well: with early-2025 AI tools they were ~19% <em>slower</em> — while estimating afterward that AI had made them ~20% faster. A follow-up with late-2025 tools showed some measured speedup (with selection-effect caveats), and METR labels the original result historical — but the perception gap is the durable lesson: <strong>self-reported speed is not evidence.</strong></li>
+    <li><strong>What the two together mean for you:</strong> the gains are real but conditional — on foundations (tests, review, platform), on structure (which is AI-DLC's whole thesis), and on measuring rather than vibing. That's precisely why this course made you build the safety net before the bolts, and the baseline before the pilot.</li>
+  </ul>
+  <div class="callout callout--note">
+    <div class="callout__label">Use the research, don't hide from it</div>
+    <p>If you don't bring up the METR result, a skeptic eventually will — and then it frames you. Bring it up first: "the research says unstructured adoption can even slow experts down, which is why we're running a structured methodology and measuring against a baseline." The strongest case for your program is built <em>from</em> the caveats, not around them.</p>
+  </div>
+
+  <h2>The one-page leadership brief</h2>
+  <p>Ship the same one-pager every cycle so trends read at a glance. A ready template is in the repo at <code>docs/leadership-brief.md</code>; its spine:</p>
+  <ul>
+    <li><strong>What ran:</strong> the units of work completed as bolts this period.</li>
+    <li><strong>The delta:</strong> baseline vs. actual on time-to-market, cost, quality — with the baseline's source stated.</li>
+    <li><strong>The spend:</strong> tooling cost + validation attention, so the gain is net, not gross.</li>
+    <li><strong>Risk posture:</strong> the guardrails in force (Module 16) — one paragraph that answers compliance before it's asked.</li>
+    <li><strong>The ask:</strong> what expanding coverage needs next.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">Positioning vendor numbers</div>
+    <p>AWS-reported 10–15x figures are <em>ambition</em>, not your claim — quote them only as "what the methodology's authors report," and lead with your own pilot's delta, however modest. One honest 2x on real work outlasts a borrowed 10x every time; credibility is the asset that compounds across every future ask, and this program will have future asks.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Do the baseline today: three completed units of work, three numbers each, dated. It's an hour of tracker archaeology, and it's the difference between "we think it's working" and a chart. Next track: the repo engineering that makes the AI (and the numbers) better.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m08">
+  <p class="lede">Bolts are the macro-loop. This module is the micro-layer underneath: the <b>dozens of small assists a developer uses every hour</b> — autocomplete, inline chat, terminal help, the everyday chores. AI-DLC doesn't replace these; it sits on top of them. Master the micro-layer and construction inside every bolt gets faster.</p>
+
+  <h2>Autocomplete is a skill, not a setting</h2>
+  <p>Copilot's inline layer has two parts. <strong>Ghost text</strong> completes at your cursor as you type — accept with <span class="kbd">Tab</span>, keep typing to refuse. <strong>Next Edit Suggestions</strong> go further: based on the edit you just made, Copilot predicts <em>where</em> your next related edit belongs (even screens away) and what it should be — rename a field and watch it offer the constructor, the getter, the mapper. Three habits separate skilled users from passengers:</p>
+  <ul>
+    <li><strong>Steer with what you type first.</strong> A precise method signature, a good name, or a one-line comment ("// reject appeal if request is not DENIED") is a prompt — ghost text quality tracks it directly.</li>
+    <li><strong>Read before Tab.</strong> Ghost text is still <em>AI proposing</em>; accepting is a micro-checkpoint. The seconds you spend reading a suggestion are the cheapest validation you'll ever do.</li>
+    <li><strong>Refuse fast.</strong> A wrong suggestion costs nothing to ignore — the failure mode is wrestling a bad completion into shape instead of just typing the line.</li>
+  </ul>
+
+  <h2>Inline chat: targeted edits without leaving the file</h2>
+  <p>Select code and open inline chat (<span class="kbd">Ctrl+I</span> / <span class="kbd">Cmd+I</span> in VS Code) for surgical asks — the slash commands cover the daily verbs: <code>/explain</code> a gnarly block, <code>/fix</code> the error under the cursor, <code>/tests</code> for the selected method, <code>/doc</code> for its Javadoc. Try each once on <code>AutoApprovalService</code>: select <code>score(...)</code>, run <code>/explain</code>, then <code>/tests</code>, and compare the generated cases with the Module 11 suite you'll build properly later.</p>
+
+  <h2>The terminal layer</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <p>Beyond full sessions, Claude Code does quick one-shot work with <code>-p</code> — and reads whatever you pipe into it:</p>
+      <div class="snippet">
+        <pre class="code code--term"><code><span class="p">$</span> claude -p "write a conventional commit message for my staged changes"
+<span class="p">$</span> mvn test 2&gt;&amp;1 | claude -p "why did this test fail? shortest likely cause"</code></pre>
+      </div>
+      <p>There's also a VS Code extension (and a JetBrains plugin) that puts Claude Code in a sidebar with proper diff views — same agent, gentler surface.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>The <strong>Copilot CLI</strong> brings the assistant to the shell with natural-language control and GitHub context — ask it to explain a failing command, draft the git incantation you can never remember, or run agent tasks from the terminal. In the editor, Copilot Chat's <code>#</code>-mentions pull specific context (a file, your terminal's last command) into a question.</p>
+    </div>
+  </div>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The hybrid setup most teams land on</div>
+    <p>These tools don't compete for the same moment: <span class="pill-trad">Copilot</span> owns the in-flow layer (ghost text, next-edit, inline chat) while a human is typing; <span class="pill-ai">Claude Code</span> owns delegated tasks (multi-file changes, investigations, whole bolts). Running both is normal — it's the setup this course quietly assumes.</p>
+  </div>
+
+  <h2>The everyday chores, with AI</h2>
+  <p>A grab-bag worth internalizing — each is a 30-second ask that used to be a 10-minute detour: explain a stack trace (paste it, ask for the single most likely cause <em>in this codebase</em>); draft a commit message or PR description from the actual diff; generate Javadoc for a public API; write and <em>explain</em> a regex (never accept a regex without its explanation); convert a curl example into a test client call; summarize a long log around one request ID.</p>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Micro-assists, same rules</div>
+    <p>The Module 16 guardrails don't shrink at small scale: a pasted stack trace can carry member data, and a tabbed completion is still unvalidated code. Scrub before you paste; read before you accept.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Do five micro-tasks on the Prior Auth service today: steer one ghost-text completion with a comment, run <code>/explain</code> and <code>/tests</code> on a method, pipe a failing build into a one-shot prompt, and generate one commit message from a real diff. Next: the daily craft nobody teaches — finding and raising defects well.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m09">
+  <p class="lede">Half a developer's week is spent on the unglamorous side of quality: noticing something's wrong, working out <em>why</em>, and writing it up so someone can fix it. AI accelerates all three — and this lab practices them by raising a real, well-evidenced defect ticket against the Prior Auth service. (Keep the ticket: the Module 12 bolt fixes it.)</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>A reviewer reports that some large physical-therapy requests seem to auto-approve when policy says they should be scrutinized. As the developer on triage, produce a defect ticket good enough that any teammate could pick it up cold: analyzed, reproduced, and precisely scoped.</p>
+  </div>
+
+  <h2>The three moves, with AI in each</h2>
+  <ul>
+    <li><strong>Analyze.</strong> Feed the AI the <em>symptom</em>, not a conclusion, and ask for ranked hypotheses against the actual code. Vague reports become searchable: "large requests auto-approving" plus the rules engine source is enough for a good tool to spot a boundary condition worth checking.</li>
+    <li><strong>Reproduce.</strong> An unreproduced defect is an opinion. The strongest reproduction in a tested codebase is a <em>failing test</em> — small, deterministic, and it doubles as the fix's finish line. A curl sequence is the acceptable fallback for behavior tests can't reach.</li>
+    <li><strong>Raise.</strong> Have the AI draft the ticket from the evidence — then validate every sentence. You're accountable for what's filed; an AI-drafted ticket with an unverified claim is worse than a thin one, because it <em>looks</em> authoritative.</li>
+  </ul>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>A ranked hypothesis list grounded in the real source, with the top hypothesis named to a specific line.</li>
+    <li>A minimal reproduction: a failing test (or exact curl sequence) demonstrating observed vs. expected.</li>
+    <li>A ticket containing: title, observed vs. expected behavior, reproduction, suspected location, severity with a reason, and environment/version.</li>
+    <li>Every factual claim in the ticket personally verified before filing.</li>
+  </ol>
+
+  <h2>Run it, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">the triage sequence</div>
+        <pre class="code"><code>1. Reviewers report large PT requests auto-approving despite policy
+   saying 10+ units gets scrutiny. Read the rules engine and give me
+   ranked hypotheses with file:line for each.
+
+2. Write a failing test that reproduces hypothesis #1. Run it and
+   show me the failure output. Do NOT fix anything.
+
+3. Draft a defect ticket from this evidence: observed vs expected,
+   the reproduction, suspected location, proposed severity + why.</code></pre>
+      </div>
+      <p>"Do NOT fix anything" matters — triage and fixing are different checkpoints, and in AI-DLC the fix is its own bolt with its own validation.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>Same sequence, editor-native: ask Copilot Chat (<code>@workspace</code>) for ranked hypotheses about the symptom; open the test class and use <code>/tests</code>-style generation to draft the failing reproduction, running it yourself; then have Chat draft the ticket body and — if your team tracks work on GitHub — file it as an Issue, where it can later be assigned onward (GitHub's coding agent can even take an issue and open a draft PR, a preview of the automation track).</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>The trail leads to the units boundary: policy says 10+ draws the penalty, <code>AutoApprovalService</code> tests <code>&gt; 10</code>, so exactly-10-unit requests score 0.90 and auto-approve. The failing test: a 10-unit request asserted to score 0.75 / route to review — currently red. The ticket names that line, carries the test as reproduction, and proposes medium-high severity (policy bypass, bounded blast radius).</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>You ran the reproduction yourself and watched it fail — the AI's claim wasn't enough.</li>
+    <li>The ticket separates <em>observed</em> from <em>suspected</em> — hypotheses are labeled as such.</li>
+    <li>Severity has a stated reason a triage meeting could argue with.</li>
+    <li>No member data or real identifiers anywhere in the ticket (Module 16's rules apply to tickets too — they're often the most widely readable artifacts in a company).</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <p>Hand the ticket to a teammate (or a fresh AI session) with no other context and ask them to reproduce. If they can get to red in five minutes, the ticket is done. File it — Module 12 picks it up.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m19">
+  <p class="lede">This track is for the person who has to stand in front of leadership — and for leaders themselves. Before you can move the numbers or prove them, you have to know the instruments. Three frameworks dominate how engineering productivity is judged today: <b>DORA's four keys</b>, <b>SPACE</b>, and DORA's <b>AI Capabilities Model</b>. This module is the scoreboard tour.</p>
+
+  <h2>DORA's four keys: speed and stability, always together</h2>
+  <p>Two decades of DORA research settled on four measures of software delivery, deliberately paired so neither half can be gamed at the other's expense:</p>
+  <ul>
+    <li><strong>Deployment frequency</strong> — how often you ship to production. <strong>Lead time for changes</strong> — commit to running in production. Together: <em>speed</em>.</li>
+    <li><strong>Change failure rate</strong> — the share of deployments causing degraded service. <strong>Failed deployment recovery time</strong> — how fast you restore. Together: <em>stability</em>.</li>
+  </ul>
+  <p>The pairing is the whole point. A team that doubles deployment frequency while change failure rate climbs hasn't improved — it has moved its problem downstream, where it's more expensive. Any AI-productivity story told in DORA terms must report all four, and the 2025 research says exactly where the risk sits: AI adoption now correlates with higher throughput, but instability rises where foundations aren't solid.</p>
+
+  <h2>SPACE: productivity is five-dimensional</h2>
+  <p>SPACE (from Forsgren, Storey, and colleagues) exists because single-number "developer productivity" is a trap. Its five dimensions: <strong>S</strong>atisfaction &amp; well-being, <strong>P</strong>erformance (outcomes, not output), <strong>A</strong>ctivity (raw counts — commits, PRs), <strong>C</strong>ommunication &amp; collaboration, and <strong>E</strong>fficiency &amp; flow. Two of its rules matter most for an AI rollout:</p>
+  <ul>
+    <li><strong>Never read one dimension alone</strong> — measure at least three, mixing system data with perception data (surveys are first-class instruments here, not soft extras).</li>
+    <li><strong>Activity is the trap dimension.</strong> AI inflates commits, PRs, and lines of code effortlessly, which is precisely why they must never be targets — only diagnostic denominators. A leader who celebrates "40% more PRs since Copilot" is measuring the tool's exhaust, not the team's delivery.</li>
+  </ul>
+
+  <h2>The AI Capabilities Model: the levers behind the numbers</h2>
+  <p>DORA's 2025 companion model answers the question every leader asks — <em>how do we make sure the AI investment pays?</em> — with seven researched capabilities that amplify AI's benefits: a <strong>clear and communicated AI stance</strong>, <strong>healthy data ecosystems</strong>, <strong>AI-accessible internal data</strong>, <strong>strong version control practices</strong>, <strong>working in small batches</strong>, a <strong>user-centric focus</strong>, and <strong>quality internal platforms</strong>. Its framing thesis is the one you already know: AI is an amplifier — the same tools magnify strong organizations and struggling ones alike. The model also names <em>value stream management</em> as the force multiplier that keeps local coding-speed gains from evaporating into downstream chaos.</p>
+
+  <div class="callout callout--key">
+    <div class="callout__label">You've already been building the levers</div>
+    <p>Map the seven onto this course and the alignment is almost one-to-one: AI stance → your guardrails and team policy (Modules 16, 18); AI-accessible internal data → persistent context (Module 7 and the whole automation track); small batches → bolts by definition; version control practices → checkpoint discipline and rollback fluency; quality platforms and data ecosystems → the AI-ready repo work. AI-DLC, run honestly, <em>is</em> a capabilities program wearing a methodology's clothes.</p>
+  </div>
+
+  <div class="callout callout--note">
+    <div class="callout__label">The one sentence to internalize</div>
+    <p>Metrics are <em>outcomes</em>; capabilities are <em>levers</em>. Leadership conversations go wrong when the metric is treated as the thing to push on directly — the next module is about pulling the levers instead.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m20">
+  <p class="lede">Knowing the scoreboard isn't moving it. This module is the playbook for making DORA and SPACE <b>actually improve</b> when AI arrives — by defending the metrics AI is documented to hurt, building the capabilities that unlock the ones it helps, and instrumenting so you can tell a learning curve from a failure.</p>
+
+  <h2>The four keys, one at a time</h2>
+  <p><strong>Lead time &amp; deployment frequency</strong> improve semi-naturally with AI — <em>on one condition: batch size stays small</em>. The classic failure: AI generates large, plausible PRs; they pile up at human review; "coding time" shrinks while lead time <em>grows</em>. The bottleneck doesn't disappear — it relocates to validation. Countermeasures, all of which you already practice: bolt-sized units of work, automated first-pass review on every PR (Module 26) so a human is never the first filter, and <strong>PR pickup time</strong> as your early-warning gauge — it's the first number to move when review is drowning.</p>
+  <p><strong>Change failure rate &amp; recovery time</strong> are the endangered pair — throughput up, stability at risk, per the 2025 findings. These you defend deliberately: the test suite as a merge <em>gate</em> (Module 11's suite isn't pedagogy, it's your CFR defense), named-human validation checkpoints (Module 14), rollback fluency so recovery is a reflex, and escaped-defect tagging so instability surfaces in week two, not quarter three.</p>
+
+  <h2>SPACE, dimension by dimension</h2>
+  <ul>
+    <li><strong>Satisfaction:</strong> quarterly survey, baselined before rollout. Watch the AI-specific drain — validation fatigue. If reviewers report drowning, throughput is borrowing against burnout.</li>
+    <li><strong>Performance:</strong> outcomes only — escape rate, rework share, revert rate. This is where "faster" is tested against "better."</li>
+    <li><strong>Activity:</strong> refuse it as a target, report it only as a denominator. Goodhart's law is not optional: any activity number you reward, AI will manufacture.</li>
+    <li><strong>Communication &amp; collaboration:</strong> review turnaround and knowledge distribution. Mob Elaboration and persistent context genuinely move this — decisions stop living in one head. Bus factor is a workable proxy.</li>
+    <li><strong>Efficiency &amp; flow:</strong> measure where the <em>waiting moved</em>. AI shrinks writing time and grows queue time at checkpoints; end-to-end flow only improves if validation keeps pace — which is why validation attention is a first-class metric in this course.</li>
+  </ul>
+
+  <h2>Instrumenting the Prior Auth pipeline (make it concrete)</h2>
+  <p>Everything above is measurable from tooling you already have: lead time and pickup time from PR timestamps; deployment frequency from pipeline events; CFR and recovery from incident/rollback tags on releases; escape rate from a <code>defect-escaped</code> label plus the Module 9 ticket discipline; the perceptual half from a five-minute quarterly survey. Wire these once, and the <code>docs/leadership-brief.md</code> numbers fill themselves in.</p>
+
+  <h2>The operating loop</h2>
+  <ol class="criteria">
+    <li><strong>Baseline before day one</strong> — four keys from the pipeline, SPACE survey for perception (Module 21 makes this the foundation of the leadership story).</li>
+    <li><strong>Adopt with structure</strong> — capabilities before coverage: tests, platform, persistent context land ahead of (or alongside) tool rollout, because the amplifier amplifies whatever it finds.</li>
+    <li><strong>Review monthly against explicit thresholds</strong> — e.g. "CFR rises two periods running → tighten gates before expanding coverage." Pre-agreed tripwires beat post-hoc debates.</li>
+    <li><strong>Target levers, never metrics</strong> — teams told to "improve deployment frequency" deploy trivia; teams that shrink batches and automate first-pass review watch frequency improve on its own.</li>
+  </ol>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Expect the J-curve — and announce it first</div>
+    <p>Even done well, the first weeks often dip: learning cost, review recalibration, new ceremony. Baselines plus a monthly cadence are what distinguish a J-curve from a genuine failure — and telling leadership about the J-curve <em>in advance</em> is itself a credibility move. A dip you predicted is evidence of understanding; a dip you explain afterward is an excuse.</p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Before the next module</div>
+    <p>Pick your thresholds now, while nothing is on fire: the CFR tripwire, the pickup-time ceiling, the survey cadence. Write them into the pilot one-pager from Module 18. The final module of this track turns all of it into the story leadership funds.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m32">
+  <p class="lede">The course ends; the codebase doesn't. Everything you've practiced — bolts, elaboration, checkpoints, persistent context — was deliberately built on foundations that extend. Here's the road ahead, and how to travel it in the same cadence.</p>
+
+  <h2>What you just proved with the provider portal</h2>
+  <p>The React track wasn't only a front-end tutorial — it was the methodology's portability test, run live. A second repo (<code>labs/priorauth-web/</code>), a second language, a second toolchain, and the same loop shipped a form, a cross-stack appeal flow, and a test suite in three bolts. The portal track is now your team's template for entering <em>any</em> unfamiliar stack: give the repo its context files on day one, run the elaboration ritual, and let the criteria — not the framework — carry the bolt.</p>
+
+  <h2>Next unit of work: a second service</h2>
+  <p>The Module 13 refactor left the rules engine composable and pure — which makes it the clean candidate for extraction into its own service when the domain grows (eligibility checks, plan-specific rule sets). That unit of work teaches AI-DLC across a <em>service boundary</em>: elaboration now covers API contracts between teams, persistent context must live on both sides, and the portal you just built becomes the consumer that keeps both services honest. Run its inception properly: a Mob Elaboration on "extract eligibility scoring into its own service" will surface the real questions — who owns the contract, what happens to the 0.85 threshold's single home, how the portal discovers two backends.</p>
+
+  <h2>What carries forward, whatever you build</h2>
+  <ul>
+    <li><strong>The loop is stack-agnostic:</strong> intent → elaboration → validated criteria → supervised construction → checkpoint — you've now run it in Java and React; Terraform is no different.</li>
+    <li><strong>The AI-ready layer is a template:</strong> every new repo gets its context files, its skills and subagents, its PR automation — Module 22's retrofit applied on day one, exactly as <code>priorauth-web</code> was born.</li>
+    <li><strong>The metrics stay the same three:</strong> elaboration-to-ship, validation attention, escape rate.</li>
+  </ul>
+
+  <div class="callout callout--key">
+    <div class="callout__label">The course, in one sentence</div>
+    <p>You migrated from a process that coordinated human typing to one that governs AI construction — and the whole discipline fits in one line: <em>AI proposes, humans validate, decisions persist.</em></p>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">Your first post-course bolt</div>
+    <p>Run the second service's Mob Elaboration for real — the intent is written above, your team knows the ritual, and both codebases are running. Ship the first extraction bolt this week.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m29">
+  <p class="lede">Your first <b>front-end bolt</b>. The loop is the one you know — intent, elaboration, validated criteria, supervised construction, checkpoint — but the artifact is a React form, and the interesting decisions are about where validation lives and what the user sees when the rules engine answers.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As a provider, I can submit a new prior authorization request from the portal and immediately see whether it auto-approved or went to human review.</p>
+  </div>
+
+  <h2>Elaboration — the Mob Elaboration beat</h2>
+  <div class="snippet">
+    <div class="snippet__cap">elaboration prompt (either tool, in labs/priorauth-web)</div>
+    <pre class="code"><code>Feature intent: "A provider submits a new prior auth request from the
+portal and immediately sees whether it auto-approved or went to review."
+Read CLAUDE.md first. Before writing any code, propose a plan and ask me
+every clarifying question you need answered.</code></pre>
+  </div>
+  <p>The questions a good elaboration surfaces here are front-end classics — and the answers came straight from conventions the repo already wrote down:</p>
+  <ul>
+    <li><em>"Validate on the client, the server, or both?"</em> — <strong>Pre-check what's cheap</strong> (NPI is exactly 10 digits, units ≥ 1) for fast feedback, <strong>but the server's 400 is the truth</strong>: always display the <code>ProblemDetail</code> detail it returns. Mirror, never replace.</li>
+    <li><em>"After submit — navigate to the list, or show the result inline?"</em> — <strong>Inline result card</strong> showing the returned status and score; the provider's question is "did it go through?", so answer it on the spot.</li>
+    <li><em>"Where does the API call live?"</em> — <strong>Extend <code>src/api/priorAuth.js</code></strong> with <code>submitRequest(payload)</code>. Components never call <code>fetch</code> — the elaboration should cite this from <code>CLAUDE.md</code> unprompted; if it doesn't, your context file needs work.</li>
+  </ul>
+  <div class="callout callout--key">
+    <div class="callout__label">Persist the decisions</div>
+    <p>"Inline result card" and "mirror, never replace" go into <code>CLAUDE.md</code> before construction. The next form bolt — appeals, one module from now — inherits both without re-asking.</p>
+  </div>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>A "New request" form collects <code>memberId</code>, <code>providerNpi</code>, <code>serviceCode</code>, <code>diagnosisCode</code>, <code>requestedUnits</code>, and submits via a new <code>submitRequest(...)</code> in <code>src/api/priorAuth.js</code>.</li>
+    <li>Success shows an inline result: the returned status badge and score (e.g. "Approved · 0.90" or "Pending review · 0.72"), and the list reflects the new request.</li>
+    <li>Client pre-checks NPI (10 digits) and units (≥ 1) before sending; any server 400 shows the <code>ProblemDetail</code> detail verbatim.</li>
+    <li>No scoring logic appears anywhere in the UI — status and score come only from the response.</li>
+    <li>At least one component test: an invalid NPI blocks submission with a visible message; <code>npm test</code> is green.</li>
+  </ol>
+
+  <h2>Construction, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">construction prompt</div>
+        <pre class="code"><code>Implement the submit form per the plan we validated:
+- submitRequest(payload) in src/api/priorAuth.js
+- a SubmitForm component (new file in src/components/) with the five
+  fields, NPI/units pre-checks, inline result card on success, and the
+  server's ProblemDetail detail shown on 400
+- wire it into App.jsx as a "New request" section
+- one Vitest+RTL test: invalid NPI blocks submit with a message
+Show me the file-change plan first; wait for my go before editing.</code></pre>
+      </div>
+      <p>At the checkpoint, the plan should touch exactly four files: the API client, the new component, its test, and <code>App.jsx</code>. A plan that wants to edit <code>RequestList</code> or add a state library is scope creep — push back before approving, not after.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>In VS Code, open <code>src/api/priorAuth.js</code> and let ghost text complete <code>submitRequest</code> from the file's own patterns — the existing functions make it a one-Tab job. Then use Copilot Chat with the validated criteria pasted in to generate <code>SubmitForm.jsx</code> and its test (<code>@workspace</code> so it sees the instructions file), and accept completions for the <code>App.jsx</code> wiring yourself. Same criteria, smaller supervised steps.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>Roughly: a ~10-line <code>submitRequest</code> mirroring the existing client functions, a controlled-inputs form component with a small <code>errors</code> state and a result card rendered from the <code>AuthResponse</code>, and a test that types a 3-digit NPI and asserts the message. Yours will differ in shape — the criteria are what must not differ.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>All HTTP still goes through <code>src/api/priorAuth.js</code> — grep the diff for <code>fetch(</code> to be sure.</li>
+    <li>The 400 path shows the <em>server's</em> message, not a hand-written guess at it.</li>
+    <li>No <code>0.85</code> literal anywhere in the front-end diff.</li>
+    <li>The test fails if you break the pre-check (try it — comment the check out and watch red).</li>
+    <li><code>CLAUDE.md</code> records the elaboration decisions.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <pre class="code code--term"><code><span class="p">$</span> cd labs/priorauth-service &amp;&amp; mvn spring-boot:run
+<span class="p">$</span> cd labs/priorauth-web &amp;&amp; npm run dev
+<span class="c"># in the portal: submit serviceCode 99213, diagnosis M54.5, 1 unit</span>
+<span class="c">#   → "Approved · 0.90" (routine visit clears the 0.85 line)</span>
+<span class="c"># submit serviceCode 70551 (MRI) → "Pending review" with a lower score</span>
+<span class="c"># submit a 3-digit NPI → blocked client-side; force-send via curl to see the server 400 agree</span>
+<span class="p">$</span> npm test</code></pre>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">The bolt, in review</div>
+    <p>Notice what changed stacks and what didn't. The prompts, the file names, the test runner — all new. The loop — intent, questions answered on the record, criteria signed before construction, a checkpoint that catches scope creep — identical. That's the point of the track.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m30">
+  <p class="lede">A bolt that <b>crosses the stack</b>. In Module 10 your team built the appeals endpoint; today the portal grows the button that calls it. The construction is small — the lesson is how AI-DLC behaves when the contract you're building against is one your own team shipped, two bolts ago, in another language.</p>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Prerequisite</div>
+    <p>This bolt needs <code>POST /api/v1/prior-auth/{id}/appeal</code> on the service — the Module 10 lab. If your team hasn't run that bolt, do it first; without it every appeal returns 404 and this lab has nothing to call.</p>
+  </div>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As a provider, when a request is denied, I can file one appeal with a reason from the portal and see the request move back to pending review.</p>
+  </div>
+
+  <h2>Elaboration — the Mob Elaboration beat</h2>
+  <div class="snippet">
+    <div class="snippet__cap">elaboration prompt (either tool, in labs/priorauth-web)</div>
+    <pre class="code"><code>Feature intent: "A provider files one appeal with a reason against a
+DENIED request from the portal; it moves back to pending review." The
+service already exposes POST /api/v1/prior-auth/{id}/appeal — required
+reason, 409 on a second appeal or a non-DENIED request. Read CLAUDE.md,
+propose a plan, and ask your clarifying questions first.</code></pre>
+  </div>
+  <p>The decisions this elaboration has to land, with the team's answers:</p>
+  <ul>
+    <li><em>"Where does the action live?"</em> — <strong>An "Appeal" button on DENIED rows only.</strong> It opens a small inline form: required reason, max 500 characters, mirroring the server's validation.</li>
+    <li><em>"Should the UI track who already appealed, to hide the button?"</em> — <strong>No.</strong> The one-appeal rule has one owner: the service. The UI updates the row from the <em>response</em> (status flips to <code>PENDING_REVIEW</code>, so the button disappears because the row is no longer DENIED) and surfaces the 409 detail if the server refuses. No duplicate bookkeeping.</li>
+    <li><em>"New API-client function or reuse?"</em> — <strong><code>appealRequest(id, reason)</code></strong> in <code>src/api/priorAuth.js</code>, same shape as its siblings.</li>
+  </ul>
+  <div class="callout callout--key">
+    <div class="callout__label">The cross-stack habit</div>
+    <p>Notice what made this elaboration short: the endpoint's rules were already written down — in the <em>service's</em> <code>CLAUDE.md</code>, by you, at the end of Module 10. Persistent context compounds across repos. Record today's "server owns the rule, UI reacts to responses" decision in the web <code>CLAUDE.md</code> and the circle closes.</p>
+  </div>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>DENIED rows — and only DENIED rows — show an "Appeal" action; it opens a form with a required reason.</li>
+    <li>Submitting calls <code>appealRequest(id, reason)</code> in the API client; the row updates to PENDING_REVIEW straight from the response, with no refetch-the-world hack and no page reload.</li>
+    <li>A blank reason is blocked client-side; a server 400 or 409 shows the <code>ProblemDetail</code> detail verbatim (the 409 is how a second appeal fails).</li>
+    <li>The UI keeps no "already appealed" state of its own — the server's response is the only source of truth.</li>
+    <li>One component test: the Appeal action renders for a DENIED row and not for an APPROVED one; <code>npm test</code> green.</li>
+  </ol>
+
+  <h2>Construction, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">construction prompt</div>
+        <pre class="code"><code>Implement the appeal flow per the validated plan:
+- appealRequest(id, reason) in src/api/priorAuth.js
+- an AppealForm component; RequestList shows an "Appeal" action on
+  DENIED rows that opens it, and updates that row from the response
+- blank reason blocked client-side; server 400/409 detail displayed
+- one test: Appeal action visible for DENIED, absent for APPROVED
+Show me the file-change plan first; wait for my go before editing.</code></pre>
+      </div>
+      <p>At the checkpoint, look hardest at the state update: the row should change from the response object, not from an optimistic guess. If the plan says "assume success and flip the badge", that's the UI inventing a business outcome — reject it.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>Ghost text will write <code>appealRequest</code> from the client file's rhythm in one accept. For the list change, select the DENIED row's cell in <code>RequestList.jsx</code> and use inline chat (<span class="kbd">Ctrl</span>+<span class="kbd">I</span>) with the criteria for that row; then Copilot Chat for <code>AppealForm.jsx</code> and the visibility test. Keep the 409 case in your prompt — it's the case Copilot forgets.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>Roughly: a client function POSTing <code>{ reason }</code>, a form component with a textarea and the shared error display, a <code>RequestList</code> that swaps the updated row into state, and a two-case visibility test. The 409 path needs no new code if the client's <code>ApiError</code> is reused — a good sign the boundary is holding.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>Appeal visibility is derived from <code>status === 'DENIED'</code> — nothing else, nowhere else.</li>
+    <li>The row update uses the response body; no optimistic status flip.</li>
+    <li>409 shows the server's sentence, and the row is unchanged afterward.</li>
+    <li>No new <code>fetch(</code> outside the API client.</li>
+    <li>Web <code>CLAUDE.md</code> records "server owns the rule, UI reacts to responses".</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <pre class="code code--term"><code><span class="c"># with both apps running — first manufacture a DENIED request (id 2 is seeded PENDING_REVIEW):</span>
+<span class="p">$</span> curl -X POST localhost:8080/api/v1/prior-auth/2/decision \
+    -H "Content-Type: application/json" \
+    -d '{"decision":"DENIED","reason":"insufficient documentation"}'
+<span class="c"># portal: the row shows Denied + an Appeal action → file an appeal with a reason</span>
+<span class="c">#   → row flips to Pending review, action disappears</span>
+<span class="c"># appeal the same id again via curl → 409; the portal shows the same sentence if you race it</span>
+<span class="p">$</span> npm test</code></pre>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">The bolt, in review</div>
+    <p>One intent, two repos, two bolts, weeks apart — and the second one was <em>faster</em> because the first one wrote its decisions down. Measure it: this bolt is most teams' shortest yet. That's persistent context showing up in the metrics, not just the vibes.</p>
+  </div>
+</article>
+
+<article class="mod" data-mod="m31">
+  <p class="lede">The portal now has real behavior — a form, an appeal flow, rules about what shows when. This bolt <b>locks it</b>, the front-end twin of Module 11: grow the one starter test into a suite that pins the load-bearing behaviors, so the next AI-built change can't silently bend them.</p>
+
+  <div class="scenario">
+    <div class="callout__label">Intent</div>
+    <p>As the team, before we build more portal features, we want the current behavior locked by component tests, so that AI-assisted changes fail loudly when they break what already works.</p>
+  </div>
+
+  <h2>Elaboration — the Mob Elaboration beat</h2>
+  <div class="snippet">
+    <div class="snippet__cap">elaboration prompt (either tool, in labs/priorauth-web)</div>
+    <pre class="code"><code>We want a component test suite that locks this app's current behavior.
+Read CLAUDE.md and the components in src/. Propose the list of behaviors
+worth pinning and how you'd isolate the tests from the real API — and ask
+your clarifying questions before writing anything.</code></pre>
+  </div>
+  <p>Two questions decide the whole shape of this suite:</p>
+  <ul>
+    <li><em>"Mock <code>fetch</code>, or mock the API client?"</em> — <strong>Mock the client</strong> (<code>vi.mock('../api/priorAuth.js')</code>). Components' contract is <code>priorAuth.js</code>, not HTTP — the repo's one-boundary rule pays off again: one seam, trivially mockable, and no test ever touches the network.</li>
+    <li><em>"What's worth pinning?"</em> — <strong>Behaviors, not coverage numbers.</strong> The team's list: badge label per status, list rendering + the service-down error, form pre-checks + server-detail display, appeal visibility on DENIED only. A percentage target is Activity-metric thinking (Module 19's Goodhart warning) — a behavior list is what a reviewer can actually validate.</li>
+  </ul>
+  <div class="callout callout--key">
+    <div class="callout__label">Persist the decisions</div>
+    <p>"Tests mock the API client, never <code>fetch</code>, never the network" goes into <code>CLAUDE.md</code>. From now on, every generated test in this repo inherits the seam.</p>
+  </div>
+
+  <h2>Validated acceptance criteria</h2>
+  <ol class="criteria">
+    <li>All four statuses render the right label and styling hook in <code>StatusBadge</code>.</li>
+    <li><code>RequestList</code>: rows render from a mocked client; a rejecting client shows the "is the service running?" error.</li>
+    <li>Submit form: an invalid NPI blocks submission; a mocked 400 <code>ApiError</code> shows the server's detail text.</li>
+    <li>Appeal action: visible for a DENIED row, absent otherwise; a mocked 409 shows its detail and leaves the row unchanged.</li>
+    <li><code>npm test</code> green, no test opens a socket, and each test queries like a user (<code>getByRole</code>, <code>getByText</code> — not component internals).</li>
+  </ol>
+
+  <h2>Construction, both ways</h2>
+  <div class="paths">
+    <div class="paths__tabs">
+      <button class="tab is-active" data-tab="cc">Claude Code</button>
+      <button class="tab t-cop" data-tab="cop">GitHub Copilot</button>
+    </div>
+    <div class="panel is-active" data-panel="cc">
+      <div class="snippet">
+        <div class="snippet__cap">construction prompt</div>
+        <pre class="code"><code>Build the component test suite per the validated criteria. Use
+vi.mock('../api/priorAuth.js') as the only seam — no fetch mocking, no
+network. Query the DOM the way a user would (roles and visible text).
+Extend StatusBadge.test.jsx; add tests beside each component. Run
+npm test yourself and iterate until green, then show me the run.</code></pre>
+      </div>
+      <p>This is the lab where you let the agent loop — write, run, fix — and audit the <em>result</em>. At the checkpoint, read the assertions, not the boilerplate: an assertion that would still pass if the feature broke is decoration, and AI test suites are where decoration hides.</p>
+    </div>
+    <div class="panel" data-panel="cop">
+      <p>Open a component beside its (empty) test file and Copilot's ghost text will scaffold <code>describe</code> blocks from the starter test's idiom. Use Copilot Chat with <code>@workspace</code> and the criteria list to generate the <code>RequestList</code> and form suites — then run <code>npm test</code> yourself; Copilot won't. The iteration loop stays in your hands, which is exactly the trade-off Module 3 promised.</p>
+    </div>
+  </div>
+
+  <div class="expected">
+    <div class="callout__label">Expected output</div>
+    <p>Roughly: four test files, each mocking the client with per-test resolved or rejected values, a <code>StatusBadge</code> loop over the four statuses, and async assertions via <code>findByText</code>. Around a dozen tests total — small, because it pins behaviors, not lines.</p>
+  </div>
+
+  <h2>Validation checklist</h2>
+  <ul class="checklist">
+    <li>Mutate one behavior by hand (swap a badge label, invert the DENIED check) — exactly the right test goes red. Undo it.</li>
+    <li>No <code>fetch</code> mocks, no real ports, no <code>data-testid</code> where a role query works.</li>
+    <li>Failure output reads like a sentence a teammate could act on.</li>
+    <li>Every criterion maps to at least one test you can point at.</li>
+    <li><code>CLAUDE.md</code> records the mocking seam decision.</li>
+  </ul>
+
+  <div class="verify">
+    <div class="callout__label">Verify it</div>
+    <pre class="code code--term"><code><span class="p">$</span> cd labs/priorauth-web
+<span class="p">$</span> npm test
+<span class="c"># expect: 4 test files, all green, finishing in a few seconds —</span>
+<span class="c"># with the service NOT running. That's the proof the suite is isolated.</span></code></pre>
+  </div>
+
+  <div class="callout callout--try">
+    <div class="callout__label">The bolt, in review</div>
+    <p>The mutation drill in the checklist is the whole lesson: a test suite you haven't watched fail is a rumor. You now hold the same lock on the portal that Module 11 gave you on the rules engine — one repo per side, both guarded, ready for whatever the next track builds.</p>
+  </div>
+</article>
+
+<!--INJECT-MODULES-HERE--></div>
+
+<script>
+"use strict";
+
+/* ===========================================================
+   Theme — dark/light toggle. Explicit choice persists in its
+   own key (so "Reset progress" never touches it); with no
+   choice saved we follow the OS preference, live.
+   =========================================================== */
+const THEME_KEY='aidlc-priorauth-theme';
+const themeBtn=document.getElementById('themeBtn');
+const sysDark=matchMedia('(prefers-color-scheme: dark)');
+function savedTheme(){ try{return localStorage.getItem(THEME_KEY)}catch(e){return null} }
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  themeBtn.textContent = t==='dark' ? '◐ Light' : '◐ Dark';
+  themeBtn.setAttribute('aria-label', t==='dark' ? 'Switch to light mode' : 'Switch to dark mode');
+}
+applyTheme(savedTheme() || (sysDark.matches?'dark':'light'));
+themeBtn.addEventListener('click',()=>{
+  const next = document.documentElement.dataset.theme==='dark' ? 'light' : 'dark';
+  try{localStorage.setItem(THEME_KEY,next)}catch(e){}
+  applyTheme(next);
+});
+sysDark.addEventListener('change',e=>{ if(!savedTheme()) applyTheme(e.matches?'dark':'light'); });
+
+/* ===========================================================
+   MODS — the single source of truth for course structure.
+   Order here is the order in the rail and the prev/next flow.
+   `/plan-module` and `/build-module` read this list.
+   A module renders its authored content from the
+   <article data-mod="ID"> block if present; otherwise it
+   shows a roadmap placeholder ("build it with /build-module").
+   =========================================================== */
+const MODS = [
+  {id:'m01', track:'The AI-DLC shift',       num:1,  kind:'concept', mins:10, title:'From sprints to bolts: the AI-DLC shift'},
+  {id:'m02', track:'The AI-DLC shift',       num:2,  kind:'concept', mins:10, title:'How your AI collaborator thinks'},
+  {id:'m03', track:'The AI-DLC shift',       num:3,  kind:'concept', mins:9,  title:'One methodology, many tools: Claude Code vs GitHub Copilot'},
+  {id:'m04', track:'The AI-DLC shift',       num:4,  kind:'hands',   mins:12, title:'Setup day: install both, run your first prompt'},
+
+  {id:'m05', track:'The Prior Auth Portal', num:5,  kind:'concept', mins:10, title:'Tour of the Prior Auth Portal'},
+  {id:'m06', track:'The Prior Auth Portal', num:6,  kind:'lab',     mins:15, title:'Bolt 0 — Read the codebase with AI'},
+  {id:'m07', track:'The Prior Auth Portal', num:7,  kind:'concept', mins:11, title:'Persistent context: CLAUDE.md & Copilot instructions'},
+
+  {id:'m08', track:'Everyday developer craft', num:8, kind:'hands', mins:14, title:'In the flow: autocomplete, inline chat & the CLI'},
+  {id:'m09', track:'Everyday developer craft', num:9, kind:'lab', mins:16, title:'Finding and raising defects with AI'},
+
+  {id:'m10', track:'Construction bolts',   num:10,  kind:'lab',     mins:20, title:'Bolt — The Appeals endpoint, from intent to code'},
+  {id:'m11', track:'Construction bolts',   num:11,  kind:'lab',     mins:18, title:'Bolt — Lock the rules engine with tests'},
+  {id:'m12', track:'Construction bolts',   num:12, kind:'lab',     mins:16, title:'Bolt — Fix a bug (the units boundary)'},
+  {id:'m13', track:'Construction bolts',   num:13, kind:'lab',     mins:22, title:'Bolt — Refactor the rules engine into composable rules'},
+  {id:'m14', track:'Construction bolts',   num:14, kind:'concept', mins:12, title:'Validation checkpoints: reviewing AI output'},
+
+  {id:'m15', track:'Running AI-DLC as a team', num:15, kind:'concept', mins:13, title:'Mob Elaboration: intent into units of work'},
+  {id:'m16', track:'Running AI-DLC as a team', num:16, kind:'concept', mins:13, title:'Guardrails: security, PHI, and when NOT to use AI'},
+  {id:'m17', track:'Running AI-DLC as a team', num:17, kind:'concept', mins:11, title:'Planning in bolts: estimation & Definition of Done'},
+  {id:'m18', track:'Running AI-DLC as a team', num:18, kind:'concept', mins:12, title:'Rolling out AI-DLC: a team adoption playbook'},
+
+  {id:'m19', track:'Leading the transformation', num:19, kind:'concept', mins:13, title:'The scoreboard: DORA, SPACE & the AI Capabilities Model'},
+  {id:'m20', track:'Leading the transformation', num:20, kind:'concept', mins:13, title:'Engineering the metrics: how bolts move DORA & SPACE'},
+  {id:'m21', track:'Leading the transformation', num:21, kind:'concept', mins:12, title:'Proving it: productivity evidence for leadership'},
+
+  {id:'m22', track:'AI engineering & automation', num:22, kind:'concept', mins:12, title:'Turn a non-AI repo into an AI-ready repo'},
+  {id:'m23', track:'AI engineering & automation', num:23, kind:'concept', mins:11, title:'Package repeatable work as Claude Skills'},
+  {id:'m24', track:'AI engineering & automation', num:24, kind:'concept', mins:12, title:'Specialized subagents for your codebase'},
+  {id:'m25', track:'AI engineering & automation', num:25, kind:'lab', mins:16, title:'Build a code-review agent'},
+  {id:'m26', track:'AI engineering & automation', num:26, kind:'lab', mins:20, title:'Automated PR review & CI with Claude Code'},
+  {id:'m27', track:'AI engineering & automation', num:27, kind:'concept', mins:12, title:'MCP, hooks & the rest of the toolbox'},
+
+  {id:'m28', track:'The provider portal (React)', num:28, kind:'concept', mins:11, title:'Tour of the provider portal: React meets the Prior Auth API'},
+  {id:'m29', track:'The provider portal (React)', num:29, kind:'lab', mins:18, title:'Bolt — The submit form, from intent to UI'},
+  {id:'m30', track:'The provider portal (React)', num:30, kind:'lab', mins:18, title:'Bolt — File an appeal from the portal'},
+  {id:'m31', track:'The provider portal (React)', num:31, kind:'lab', mins:16, title:'Bolt — Lock the portal with component tests'},
+
+  {id:'m32', track:'What’s next',           num:32, kind:'concept', mins:10, title:'Extend the Portal: a second service & beyond'},
+];
+
+const KIND = {
+  concept:{label:'Concept', cls:'badge--concept'},
+  lab:    {label:'Lab',     cls:'badge--lab'},
+  hands:  {label:'Hands-on',cls:'badge--hands'},
+};
+const BUILT = new Set([...document.querySelectorAll('#mod-source [data-mod]')].map(a=>a.dataset.mod));
+const completable = MODS.filter(m=>!m.roadmap);
+
+/* ---- persistence (guarded so it degrades gracefully) ---- */
+const KEY='aidlc-priorauth-v1';
+function load(){ try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}} }
+function save(s){ try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){} }
+let state = load();
+let done = new Set(state.done||[]);
+let cur = Math.max(0, MODS.findIndex(m=>m.id===state.cur));
+if(cur<0) cur=0;
+/* deep links: #m07 (any case) opens that module, beating saved position */
+const hashMod = MODS.findIndex(m=>m.id===location.hash.slice(1).toLowerCase());
+if(hashMod>=0) cur=hashMod;
+
+/* ---- element refs ---- */
+const $=id=>document.getElementById(id);
+const nav=$('nav'), body=$('body'), eyebrow=$('eyebrow'), modTitle=$('modTitle'), modMeta=$('modMeta');
+const prevBtn=$('prevBtn'), nextBtn=$('nextBtn'), prevT=$('prevT'), nextT=$('nextT');
+const completeBtn=$('completeBtn'), progFill=$('progFill'), progText=$('progText');
+const rail=$('rail'), scrim=$('scrim');
+
+/* ---- build the rail nav, grouped by track ---- */
+function buildNav(){
+  nav.innerHTML='';
+  let lastTrack=null;
+  MODS.forEach((m,i)=>{
+    if(m.track!==lastTrack){
+      const h=document.createElement('div');
+      h.className='track__label'; h.textContent=m.track;
+      nav.appendChild(h); lastTrack=m.track;
+    }
+    const b=document.createElement('button');
+    b.className='nav-item'+(m.roadmap?' is-roadmap':'');
+    b.dataset.i=i;
+    b.innerHTML=
+      '<span class="nav-item__num">'+m.num+'</span>'+
+      '<span class="nav-item__t"><small>'+KIND[m.kind].label+'</small>'+m.title+'</span>'+
+      '<span class="nav-item__dot"></span>';
+    b.addEventListener('click',()=>{ go(i); closeMenu(); });
+    nav.appendChild(b);
+  });
+}
+
+/* ---- render a module ---- */
+function go(i){
+  cur=Math.max(0,Math.min(MODS.length-1,i));
+  const m=MODS[cur];
+  try{history.replaceState(null,'','#'+m.id)}catch(e){}
+
+  eyebrow.innerHTML='<span class="eyebrow__track">'+m.track+'</span>'+
+    '<span class="badge '+KIND[m.kind].cls+'">'+KIND[m.kind].label+'</span>';
+  modTitle.textContent=m.title;
+  modMeta.innerHTML = m.roadmap
+    ? 'Module <b>'+m.num+'</b> of '+MODS.length+' &nbsp;·&nbsp; on the roadmap'
+    : 'Module <b>'+m.num+'</b> of '+MODS.length+' &nbsp;·&nbsp; about <b>'+m.mins+' min</b>';
+
+  const src=document.querySelector('#mod-source [data-mod="'+m.id+'"]');
+  if(src){
+    body.innerHTML=src.innerHTML;
+  }else{
+    body.innerHTML=
+      '<div class="roadmap">'+
+        '<div class="roadmap__tag">Roadmap · not built yet</div>'+
+        '<h2>'+m.title+'</h2>'+
+        '<p>'+(m.summary||'')+'</p>'+
+        '<p style="margin-top:1.2em">Build it in Claude Code with '+
+        '<code>/plan-module '+m.num+'</code> → <code>/build-module '+m.num+'</code> → '+
+        '<code>/validate-module '+m.num+'</code>.</p>'+
+      '</div>';
+  }
+
+  // footer prev/next
+  prevBtn.disabled = cur===0;
+  nextBtn.disabled = cur===MODS.length-1;
+  prevT.textContent = cur>0 ? MODS[cur-1].num+'. '+short(MODS[cur-1].title) : '—';
+  nextT.textContent = cur<MODS.length-1 ? MODS[cur+1].num+'. '+short(MODS[cur+1].title) : '—';
+
+  // complete toggle (roadmap modules aren't completable)
+  completeBtn.hidden = !!m.roadmap;
+  completeBtn.classList.toggle('is-done', done.has(m.id));
+  completeBtn.textContent = done.has(m.id) ? '✓ Completed' : 'Mark complete';
+
+  // active nav state
+  [...nav.querySelectorAll('.nav-item')].forEach(el=>{
+    const mm=MODS[+el.dataset.i];
+    el.classList.toggle('is-active', +el.dataset.i===cur);
+    el.classList.toggle('is-done', done.has(mm.id));
+  });
+
+  state.cur=m.id; save(state);
+  document.querySelector('.stage').scrollTo({top:0});
+  window.scrollTo({top:0, behavior:'auto'});
+}
+function short(t){ return t.replace(/^Lab — /,'').slice(0,32)+(t.length>36?'…':''); }
+
+/* ---- progress ---- */
+function refreshProgress(){
+  const n=completable.filter(m=>done.has(m.id)).length;
+  progText.textContent=n+' / '+completable.length;
+  progFill.style.width=(completable.length? (n/completable.length*100):0)+'%';
+}
+
+/* ---- complete toggle ---- */
+completeBtn.addEventListener('click',()=>{
+  const m=MODS[cur]; if(m.roadmap) return;
+  if(done.has(m.id)) done.delete(m.id); else done.add(m.id);
+  state.done=[...done]; save(state);
+  completeBtn.classList.toggle('is-done', done.has(m.id));
+  completeBtn.textContent = done.has(m.id) ? '✓ Completed' : 'Mark complete';
+  const item=nav.querySelector('.nav-item[data-i="'+cur+'"]');
+  if(item) item.classList.toggle('is-done', done.has(m.id));
+  refreshProgress();
+});
+
+prevBtn.addEventListener('click',()=>go(cur-1));
+nextBtn.addEventListener('click',()=>go(cur+1));
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,textarea')) return;
+  if(e.key==='ArrowLeft'&&cur>0) go(cur-1);
+  if(e.key==='ArrowRight'&&cur<MODS.length-1) go(cur+1);
+});
+
+/* ---- dual-path lab tabs (event delegation, since content is injected) ---- */
+body.addEventListener('click',e=>{
+  const tab=e.target.closest('.tab'); if(!tab) return;
+  const box=tab.closest('.paths'); if(!box) return;
+  const which=tab.dataset.tab;
+  box.querySelectorAll('.tab').forEach(t=>t.classList.toggle('is-active', t===tab));
+  box.querySelectorAll('.panel').forEach(p=>p.classList.toggle('is-active', p.dataset.panel===which));
+});
+
+/* ---- mobile menu ---- */
+function closeMenu(){ rail.classList.remove('is-open'); scrim.classList.remove('is-open'); }
+$('menuBtn').addEventListener('click',()=>{ rail.classList.toggle('is-open'); scrim.classList.toggle('is-open'); });
+scrim.addEventListener('click',closeMenu);
+
+/* ---- reset ---- */
+$('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Clear saved progress on this device?')) return;
+  done=new Set(); state={}; save(state);
+  refreshProgress(); go(0);
+});
+
+/* ---- boot ---- */
+buildNav();
+refreshProgress();
+go(cur);
+</script>
+</body>
+</html>

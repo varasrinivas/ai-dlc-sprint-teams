@@ -1,0 +1,54 @@
+/* Small, deliberately plain stylesheet. The course is about the workflow, not the CSS. */
+
+:root {
+  --ink: #26221c;
+  --muted: #7a7264;
+  --paper: #faf7f1;
+  --line: #e5ddcf;
+  --green: #1e7f4f;
+  --amber: #a06a00;
+  --rose: #b3383d;
+  --gray: #5b6470;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.app { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.app__header h1 { margin: 0; font-size: 1.5rem; }
+.app__sub { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem; }
+
+main { margin-top: 1.5rem; }
+
+.toolbar { margin-bottom: 0.75rem; }
+
+table.requests { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.requests th, .requests td {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.requests th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+.badge--approved { color: var(--green); }
+.badge--pending_review { color: var(--amber); }
+.badge--denied { color: var(--rose); }
+.badge--submitted { color: var(--gray); }
+
+.muted { color: var(--muted); }
+.error { color: var(--rose); }
