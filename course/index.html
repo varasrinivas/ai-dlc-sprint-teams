@@ -367,7 +367,7 @@ pre.code.code--term code{color:var(--term-ink)}
   </div>
 
   <h2>Honest expectations</h2>
-  <p>AWS and its partners report dramatic gains from AI-DLC engagements — including compressing months of planned work into days of mob sessions — versus the ~10–15% typically measured from unstructured assistant adoption. The gap, in AWS's telling, <em>is</em> the methodology. Treat those numbers as vendor benchmarks: directionally interesting, unverified in your context. And know the real trade-off going in: bolts are faster in calendar time but <strong>hungry for senior attention</strong> — validation checkpoints with the whole team are the new constraint, and this course treats reviewing well as a first-class skill.</p>
+  <p>AWS and its partners report dramatic gains from AI-DLC engagements — vendor-reported 10–15x, including compressing months of planned work into days of mob sessions — versus the ~10–15% typically measured from unstructured assistant adoption. The gap, in AWS's telling, <em>is</em> the methodology. Treat those numbers as vendor benchmarks: directionally interesting, unverified in your context. And know the real trade-off going in: bolts are faster in calendar time but <strong>hungry for senior attention</strong> — validation checkpoints with the whole team are the new constraint, and this course treats reviewing well as a first-class skill.</p>
 
   <div class="callout callout--warn">
     <div class="callout__label">Honest from the start</div>
@@ -465,7 +465,8 @@ pre.code.code--term code{color:var(--term-ink)}
 name: prior-auth-rules
 description: Conventions for the Prior Auth auto-approval rules engine. Use
   whenever adding, changing, or reviewing approval scoring logic, the
-  auto-approval threshold, or AutoApprovalService.
+  auto-approval threshold, or AutoApprovalService — so scoring stays
+  explainable, deterministic, and covered by tests.
 ---
 
 # Prior Auth rules engine
@@ -590,7 +591,7 @@ report findings grouped by severity with a file:line and a concrete fix.</code><
 conventions in CLAUDE.md. It should be read-only (Read, Grep, Glob) and
 report findings grouped by severity with file:line and a fix.</code></pre>
       </div>
-      <p>Claude writes the <code>.claude/agents/&lt;name&gt;.md</code> file. Restart the session so it loads.</p>
+      <p>Claude may ask clarifying questions first — which conventions to encode, how strict to be. Answer from <code>CLAUDE.md</code>; that's the elaboration beat in miniature. It then writes the <code>.claude/agents/&lt;name&gt;.md</code> file. Restart the session so it loads.</p>
       <p><strong>Then run it on a change:</strong> make a small edit to the service, stage it, and invoke the reviewer.</p>
       <div class="snippet">
         <div class="snippet__cap">Claude Code session</div>
@@ -725,7 +726,7 @@ One blocking issue: a scoring change landed without a matching test.
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p>Open a pull request with a small change to the service and confirm the review comment appears within a minute or two. Then comment <code>@claude review</code> to trigger an on-demand pass, and (Copilot side) request a Copilot review on the same PR to compare the two.</p>
+    <p>Open a pull request with a small change to the service and confirm the review comment appears within a minute or two. Then comment <code>@claude review</code> to trigger an on-demand pass, and (Copilot side) request a Copilot review on the same PR to compare the two. Finally, pick one inline comment from either bot and check it against the actual code before acting on it — a bot posting is not a bot being right, and that check is the checkpoint.</p>
   </div>
 
   <div class="callout callout--warn">
@@ -859,7 +860,7 @@ One blocking issue: a scoring change landed without a matching test.
 
   <div class="callout callout--warn">
     <div class="callout__label">Honest comparison rule</div>
-    <p>This course won't tell you one tool "wins." They genuinely occupy different points: agentic depth and customization versus in-editor ubiquity and turnkey features. Most migrating teams end up using both — and the labs are designed so you feel <em>why</em> for yourself.</p>
+    <p>This course won't tell you one tool "wins." They genuinely occupy different points: Claude Code's depth as an autonomous agent you can customize to your repo, versus Copilot's in-editor ubiquity and turnkey features. Most migrating teams end up using both — and the labs are designed so you feel <em>why</em> for yourself.</p>
   </div>
 
   <div class="callout callout--try">
@@ -937,12 +938,12 @@ request routed to a human reviewer?</code></pre>
         <b class="rev">&lt; 0.85 → PENDING_REVIEW</b>
       </div>
     </div>
-    <figcaption class="figure__cap">The gate every request passes: <code>AutoApprovalService</code> scores it, and the 0.85 threshold decides its path. Decided requests are persisted through the repository into H2.</figcaption>
+    <figcaption class="figure__cap">The gate every request passes: <code>AutoApprovalService</code> scores it, and the 0.85 threshold decides its path. Decided requests are persisted through the repository into H2, an in-memory database that resets on every restart.</figcaption>
   </figure>
 
   <h2>The layers, and why they're strict</h2>
   <ul>
-    <li><strong>Web</strong> (<code>com/portal/priorauth/web/PriorAuthController.java</code> + DTO records) — validates input, maps to <code>AuthResponse</code>, never touches the database. Errors go through <code>GlobalExceptionHandler</code>.</li>
+    <li><strong>Web</strong> (<code>com/portal/priorauth/web/PriorAuthController.java</code> + DTO records — DTOs, the data-transfer objects that define what crosses the wire) — validates input, maps to <code>AuthResponse</code>, never touches the database. Errors go through <code>GlobalExceptionHandler</code>.</li>
     <li><strong>Service</strong> (<code>com/portal/priorauth/service/PriorAuthService.java</code>) — orchestrates: create, score, persist, and the reviewer's decide flow.</li>
     <li><strong>Rules engine</strong> (<code>com/portal/priorauth/service/AutoApprovalService.java</code>) — pure and deterministic: base 0.90, minus penalties (review-required service −0.20, units &gt; 10 −0.15, blank diagnosis −0.10), clamped, compared to <code>AUTO_APPROVE_THRESHOLD = 0.85</code>.</li>
     <li><strong>Domain</strong> (<code>com/portal/priorauth/domain/PriorAuthRequest.java</code>) — the entity mutates only through <code>applyDecision(...)</code>; the lifecycle is SUBMITTED → APPROVED | PENDING_REVIEW → (reviewer) APPROVED | DENIED.</li>
@@ -1155,6 +1156,7 @@ Show me the plan of file changes first; wait for my go before editing.</code></p
     -H "Content-Type: application/json" \
     -d '{"reason":"clinical notes attached on resubmission"}'
 <span class="c"># expect PENDING_REVIEW; a second appeal must return 409</span></code></pre>
+    <p>Run that second appeal yourself and read the 409 body — the AI reporting "tests pass" is not the checkpoint; you watching the conflict come back is. Trust nothing you didn't validate.</p>
   </div>
 
   <div class="callout callout--try">
@@ -1181,7 +1183,7 @@ them hard to test.</code></pre>
   </div>
   <p>Two things a good elaboration surfaces here — and the team's rulings:</p>
   <ul>
-    <li><em>"Each penalty needs isolation and at least one stacking case."</em> — <strong>Agreed.</strong> Four single-factor rows, one stacked row (MRI + high units → 0.55), one clamp sanity check.</li>
+    <li><em>"Each penalty needs isolation and at least one stacking case."</em> — <strong>Agreed.</strong> Four single-factor rows, one stacked row (MRI + high units → 0.55).</li>
     <li><em>"No current input can score exactly 0.85, so the <code>&gt;=</code> boundary is untestable through real requests."</em> — This is elaboration earning its keep: a genuine gap in the rules, found before a line of test code. <strong>Ruling:</strong> document the boundary semantics with a direct comparison test against the constant, and record in <code>CLAUDE.md</code> that any future penalty summing to a 0.85 score must auto-approve.</li>
   </ul>
 
@@ -1247,13 +1249,13 @@ Reviewers say 10-unit requests are auto-approving. Before changing any
 code: locate the likely cause, and write a failing test that proves
 the bug as stated.</code></pre>
   </div>
-  <p>The AI should find the off-by-one — <code>request.getRequestedUnits() &gt; HIGH_UNIT_THRESHOLD</code> penalizes 11+, not 10+ — and propose a test asserting a 10-unit request scores 0.75. Team ruling to record: <strong>the spec is authoritative</strong> ("10 or more"), so the fix is <code>&gt;=</code>, and the Module 11 row for units must be updated in the same change.</p>
+  <p>The AI should find the off-by-one — <code>request.getRequestedUnits() &gt; HIGH_UNIT_THRESHOLD</code> penalizes 11+, not 10+ — and propose a test asserting a 10-unit request scores 0.75. Team ruling to record: <strong>the spec is authoritative</strong> ("10 or more"), so the fix is <code>&gt;=</code>, and any Module 11 test rows or boundary comments the spec change affects are updated in the same change.</p>
 
   <h2>Validated acceptance criteria</h2>
   <ol class="criteria">
     <li>A new test with a 10-unit request fails <em>before</em> the fix (red) with score 0.90 vs expected 0.75.</li>
     <li>The comparison becomes <code>&gt;=</code>; the constant's meaning is made unmistakable in name or comment.</li>
-    <li>The full suite — including Module 11's table, updated for the 10-unit row — is green after.</li>
+    <li>The full suite — including Module 11's table, with any affected rows or comments updated — is green after.</li>
     <li>No other behavior changes: 9-unit requests still score 0.90.</li>
   </ol>
 
@@ -1292,7 +1294,11 @@ the bug as stated.</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p><code>mvn test</code> green, then live: submit a 10-unit request via curl and confirm it lands in PENDING_REVIEW at 0.75.</p>
+    <p><code>mvn test</code> green, then live: submit a 10-unit request and confirm it now lands in PENDING_REVIEW at 0.75.</p>
+    <pre class="code code--term"><code><span class="p">$</span> curl -X POST localhost:8080/api/v1/prior-auth \
+  -H "Content-Type: application/json" \
+  -d '{"memberId":"MBR-2003","providerNpi":"1234567890","serviceCode":"97110","diagnosisCode":"M54.5","requestedUnits":10}'
+<span class="c"># expect: "status":"PENDING_REVIEW" at 0.75 — the very request Module 9's ticket showed sailing through</span></code></pre>
   </div>
 </article>
 
@@ -1314,7 +1320,7 @@ which rules fired. Two design options with trade-offs. No code yet.</code></pre>
   <p>Typical fork the AI presents, and the mob's rulings:</p>
   <ul>
     <li><em>"Rule as a penalty supplier vs a score transformer?"</em> — <strong>Penalty supplier:</strong> a <code>ScoringRule</code> with a name and a penalty-for-request method. Simpler to test, sums transparently from the 0.90 base.</li>
-    <li><em>"Spring-injected rule beans vs a plain list in the service?"</em> — <strong>Plain list, constructed in the service.</strong> Keeps the engine pure and framework-free, per the repo convention.</li>
+    <li><em>"Spring-injected rule beans vs a plain list in the service?"</em> — <strong>Plain list, constructed in the service.</strong> Keeps the rules free of framework and database calls, per the repo convention.</li>
     <li><em>"May explain() text change?"</em> — <strong>Outcome semantics no; wording may improve.</strong> Update the Module 11 explain test only if wording shifts.</li>
   </ul>
 
@@ -1355,7 +1361,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <h2>Validation checklist</h2>
   <ul class="checklist">
     <li>The Module 11 table passed at every step, unmodified.</li>
-    <li>No Spring or I/O crept into the engine.</li>
+    <li>No framework or database calls crept into the rules.</li>
     <li>Adding a hypothetical fourth rule would now be a one-class change — the intent, achieved.</li>
     <li>The design rulings are recorded in <code>CLAUDE.md</code>.</li>
   </ul>
@@ -1379,7 +1385,13 @@ Stop and show me if any existing test needs to change.</code></pre>
   </ul>
 
   <h2>Checkpoint two: the code, before it merges</h2>
-  <p>Reviewing AI code is reviewing a fast, well-read author with no stake in being right. Priorities, in order: <strong>correctness against the criteria</strong> (recompute one expected value by hand — generated tests can encode generated mistakes); <strong>invariants and conventions</strong> (state changes via guarded methods, entities never over the wire, layering intact); <strong>invented APIs</strong> (any method you don't recognize gets an open-the-source check — this is where confident errors hide); <strong>the tests test something</strong> (would they fail if the behavior broke? Module 11's mutation trick works everywhere).</p>
+  <p>Reviewing AI code is reviewing a fast, well-read author with no stake in being right. Priorities, in order:</p>
+  <ul>
+    <li><strong>Correctness against the criteria</strong> — recompute one expected value by hand; generated tests can encode generated mistakes.</li>
+    <li><strong>Invariants and conventions</strong> — state changes via guarded methods, entities never over the wire, layering intact.</li>
+    <li><strong>Invented APIs</strong> — any method you don't recognize gets an open-the-source check; this is where confident errors hide.</li>
+    <li><strong>The tests test something</strong> — would they fail if the behavior broke? Module 11's mutation trick works everywhere.</li>
+  </ul>
 
   <div class="callout callout--key">
     <div class="callout__label">The asymmetry to internalize</div>
@@ -1538,7 +1550,8 @@ Stop and show me if any existing test needs to change.</code></pre>
    │  ├─ RequestList.jsx            ← fetch, filter by status, render table
    │  ├─ StatusBadge.jsx            ← pure: status in, colored badge out
    │  └─ StatusBadge.test.jsx       ← one starter test (Vitest + RTL)
-   └─ test/setup.js</code></pre>
+   ├─ test/setup.js
+   └─ …                             ← plus the entry point &amp; styles</code></pre>
   </div>
   <p>Stack: <b>React 19 + Vite</b>, plain JavaScript, no router, no state library — deliberately small, because the course is about the workflow, not the framework. Tests run on <b>Vitest + React Testing Library</b>. To run it, start the service first (<code>mvn spring-boot:run</code>), then <code>npm install &amp;&amp; npm run dev</code> and open <code>localhost:5173</code>.</p>
 
@@ -1547,7 +1560,7 @@ Stop and show me if any existing test needs to change.</code></pre>
     <div class="snippet__cap">the layering — the front-end mirror of the service's rule "controllers are thin"</div>
     <pre class="code"><code>App.jsx → components/* → api/priorAuth.js → fetch → /api/v1/prior-auth</code></pre>
   </div>
-  <p>Two conventions carry the whole architecture. First: <b>components never call <code>fetch</code></b> — every request goes through <code>src/api/priorAuth.js</code>, so the API contract lives in one file and errors are handled once (the client parses the service's RFC&nbsp;7807 <code>ProblemDetail</code> and throws an <code>ApiError</code> whose message is safe to show a user). Second: the Vite dev server <b>proxies <code>/api</code> to port 8080</b>, so the browser sees a single origin and nobody writes CORS config on either side.</p>
+  <p>Two conventions carry the whole architecture. First: <b>components never call <code>fetch</code></b> — every request goes through <code>src/api/priorAuth.js</code>, so the API contract lives in one file and errors are handled once (the client parses the service's <code>ProblemDetail</code> (RFC&nbsp;7807, the standard machine-readable error-body format) and throws an <code>ApiError</code> whose message is safe to show a user). Second: the Vite dev server <b>proxies <code>/api</code> to port 8080</b>, so the browser sees a single origin and nobody writes CORS config on either side.</p>
 
   <div class="callout callout--key">
     <div class="callout__label">The rules stay on the server</div>
@@ -1602,7 +1615,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <p>Come to leadership already knowing the literature — it's two-sided, and knowing both sides is what makes you credible:</p>
   <ul>
     <li><strong>Adoption and perception are sky-high.</strong> DORA's 2025 State of AI-assisted Software Development (≈5,000 professionals) found ~90% of developers using AI, with over 80% perceiving a productivity gain — while roughly 30% report little or no trust in AI-generated code. Its headline: <em>AI is an amplifier</em> — it magnifies strong teams and magnifies dysfunction; throughput rises, but delivery instability rises too where foundations are weak.</li>
-    <li><strong>Perception is not measurement.</strong> METR's 2025 randomized controlled trial put experienced open-source developers on real tasks in repos they knew well: with early-2025 AI tools they were ~19% <em>slower</em> — while estimating afterward that AI had made them ~20% faster. A follow-up with late-2025 tools showed some measured speedup (with selection-effect caveats), and METR labels the original result historical — but the perception gap is the durable lesson: <strong>self-reported speed is not evidence.</strong></li>
+    <li><strong>Perception is not measurement.</strong> METR's 2025 randomized controlled trial put experienced open-source developers on real tasks in repos they knew well: with early-2025 AI tools they were ~19% <em>slower</em> — while estimating afterward that AI had made them ~20% faster. METR's own follow-up with late-2025 tools proved methodologically unreliable (selection effects — many developers now decline to work without AI), though METR says developers are likely faster with current tools — and the perception gap is the durable lesson: <strong>self-reported speed is not evidence.</strong></li>
     <li><strong>What the two together mean for you:</strong> the gains are real but conditional — on foundations (tests, review, platform), on structure (which is AI-DLC's whole thesis), and on measuring rather than vibing. That's precisely why this course made you build the safety net before the bolts, and the baseline before the pilot.</li>
   </ul>
   <div class="callout callout--note">
@@ -1814,7 +1827,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <ul>
     <li><strong>Satisfaction:</strong> quarterly survey, baselined before rollout. Watch the AI-specific drain — validation fatigue. If reviewers report drowning, throughput is borrowing against burnout.</li>
     <li><strong>Performance:</strong> outcomes only — escape rate, rework share, revert rate. This is where "faster" is tested against "better."</li>
-    <li><strong>Activity:</strong> refuse it as a target, report it only as a denominator. Goodhart's law is not optional: any activity number you reward, AI will manufacture.</li>
+    <li><strong>Activity:</strong> refuse it as a target, report it only as a denominator. Goodhart's law — when a measure becomes a target, it ceases to be a good measure — is not optional here: any activity number you reward, AI will manufacture.</li>
     <li><strong>Communication &amp; collaboration:</strong> review turnaround and knowledge distribution. Mob Elaboration and persistent context genuinely move this — decisions stop living in one head. Bus factor is a workable proxy.</li>
     <li><strong>Efficiency &amp; flow:</strong> measure where the <em>waiting moved</em>. AI shrinks writing time and grows queue time at checkpoints; end-to-end flow only improves if validation keeps pace — which is why validation attention is a first-class metric in this course.</li>
   </ul>
@@ -2048,7 +2061,8 @@ Show me the file-change plan first; wait for my go before editing.</code></pre>
     -d '{"decision":"DENIED","reason":"insufficient documentation"}'
 <span class="c"># portal: the row shows Denied + an Appeal action → file an appeal with a reason</span>
 <span class="c">#   → row flips to Pending review, action disappears</span>
-<span class="c"># appeal the same id again via curl → 409; the portal shows the same sentence if you race it</span>
+<span class="c"># appeal the same id again via curl → 409, with the same ProblemDetail</span>
+<span class="c">#   sentence the portal would display — the server's rule, one voice</span>
 <span class="p">$</span> npm test</code></pre>
   </div>
 
@@ -2087,7 +2101,7 @@ your clarifying questions before writing anything.</code></pre>
   <h2>Validated acceptance criteria</h2>
   <ol class="criteria">
     <li>All four statuses render the right label and styling hook in <code>StatusBadge</code>.</li>
-    <li><code>RequestList</code>: rows render from a mocked client; a rejecting client shows the "is the service running?" error.</li>
+    <li><code>RequestList</code>: rows render from a mocked client; a rejecting client shows the "…is the Prior Auth service running on port 8080?" error.</li>
     <li>Submit form: an invalid NPI blocks submission; a mocked 400 <code>ApiError</code> shows the server's detail text.</li>
     <li>Appeal action: visible for a DENIED row, absent otherwise; a mocked 409 shows its detail and leaves the row unchanged.</li>
     <li><code>npm test</code> green, no test opens a socket, and each test queries like a user (<code>getByRole</code>, <code>getByText</code> — not component internals).</li>

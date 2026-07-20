@@ -75,4 +75,9 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   m19 "a decade of DORA", m22 file count, m24 tools bullet + stray `</span>`, m25 read-only wording
   + Copilot review prompt, m29 list-refresh mechanism named; CLAUDE.md kit section updated to match
   built lab markup (bare `scenario`/`expected`/`verify`, "Intent" label)
+- 2026-07-20 · applied the validation pass's nit fixes across 16 modules (jargon glosses, m01
+  10–15x figure, m11/m12 criteria alignment, m13 framework wording, m14 checkpoint-two list,
+  m21 METR follow-up corrected against METR's Feb-2026 update, m25/m26 elaboration + trust
+  beats, m28 tree ellipsis, m30 409 comment, m31 exact error string; verified
+  claude-sonnet-4-6 in m26's workflow is a live model id)
 - _(add a line per session: date · module · what changed)_
