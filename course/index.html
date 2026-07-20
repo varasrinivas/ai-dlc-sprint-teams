@@ -708,10 +708,16 @@ One blocking issue: a scoring change landed without a matching test.
     </div>
 
     <div class="panel" data-panel="cop">
-      <p>GitHub Copilot offers this as a built-in feature rather than a workflow you write:</p>
+      <p>GitHub Copilot offers this as a built-in feature rather than a workflow you write. It's a settings flow, not a prompt:</p>
+      <div class="snippet">
+        <div class="snippet__cap">where it lives on GitHub.com</div>
+        <pre class="code"><code>Repository → Settings → Rules → Rulesets
+  → "Automatically request Copilot code review"
+(or add Copilot as a reviewer on any single PR)</code></pre>
+      </div>
       <ul>
-        <li><strong>Copilot code review:</strong> enable it as an automatic reviewer for the repository (or add Copilot as a reviewer on a specific PR) so it posts review comments on new pull requests.</li>
-        <li><strong>Fix with Copilot:</strong> when a CI check goes red, the button hands the failure to Copilot, which reads the logs, pushes a fix to the branch, and tags you for review.</li>
+        <li><strong>Copilot code review:</strong> once enabled, Copilot posts review comments on new pull requests automatically — and it reads <code>.github/copilot-instructions.md</code>, so the same file that steers your editor suggestions is what makes the CI review repo-aware.</li>
+        <li><strong>Failing checks:</strong> when a CI check goes red, hand the failure to Copilot (the "Fix with Copilot" action, or the Copilot coding agent) and it proposes a fix on the branch for you to review. The exact button names shift as the feature evolves — check the current docs.</li>
       </ul>
       <div class="callout callout--note">
         <div class="callout__label">The trade-off worth noticing</div>
@@ -756,7 +762,8 @@ One blocking issue: a scoring change landed without a matching test.
   <p>Everything so far has worked with files in your project. <strong>MCP (the Model Context Protocol)</strong> lets Claude Code connect to external tools and data through a standard interface — an issue tracker, a database, internal docs, a browser. You add a server, and Claude can use it as part of a task.</p>
   <div class="snippet">
     <div class="snippet__cap">adding an MCP server</div>
-    <pre class="code code--term"><code><span class="p">$</span> claude mcp add <span class="c"># register a server; or commit a .mcp.json for the team</span></code></pre>
+    <pre class="code code--term"><code><span class="p">$</span> claude mcp add &lt;name&gt; -- &lt;command&gt;  <span class="c"># register a server (see claude mcp add --help);</span>
+<span class="c"># or commit a .mcp.json so the whole team gets it</span></code></pre>
   </div>
   <p>Now a task like "pull the acceptance criteria from ticket PA-142 and implement it" can read the ticket directly, instead of you copying it in. <strong>Reach for MCP</strong> when the context or the action you need lives outside the codebase.</p>
 
@@ -1074,7 +1081,7 @@ request routed to a human reviewer?</code></pre>
 
   <div class="callout callout--try">
     <div class="callout__label">Before the next module</div>
-    <p>Add one line to the service's <code>CLAUDE.md</code> that would have prevented the worst guess you caught in Bolt 0. Then re-ask the same question in a fresh session and watch the difference. That loop — validate, persist, improve — is AI-DLC in miniature. Next: your first full construction bolt.</p>
+    <p>Add one line to the service's <code>CLAUDE.md</code> that would have prevented the worst guess you caught in Bolt 0. Then re-ask the same question in a fresh session and watch the difference. That loop — validate, persist, improve — is AI-DLC in miniature. Next: the everyday assist layer under every bolt — then your first full construction bolt in Module 10.</p>
   </div>
 </article>
 
@@ -1457,14 +1464,14 @@ Stop and show me if any existing test needs to change.</code></pre>
   <h2>Data that never enters a prompt or a context file</h2>
   <ul>
     <li><strong>Secrets:</strong> credentials, tokens, connection strings. Not in prompts, not in <code>CLAUDE.md</code>, not in workflow YAML — CI secrets live in the secret store, which is exactly what <code>/install-github-app</code> sets up.</li>
-    <li><strong>PHI (Protected Health Information) and member data:</strong> real member IDs, provider NPIs, diagnoses tied to people. The labs use synthetic data (<code>MBR-1001</code>) by design; production debugging with AI must use the same discipline — redact or synthesize before you paste.</li>
+    <li><strong>PHI (Protected Health Information) and member data:</strong> real member IDs, provider NPIs (National Provider Identifiers), diagnoses tied to people. The labs use synthetic data (<code>MBR-1001</code>) by design; production debugging with AI must use the same discipline — redact or synthesize before you paste.</li>
     <li><strong>The quiet leak path:</strong> logs and stack traces pasted into chat. A "harmless" exception dump can carry a member ID in a field name. The security-reviewer subagent in this repo exists partly to catch data escaping into logs at all.</li>
   </ul>
 
   <h2>Work that stays human-led</h2>
   <p>AI-DLC says AI proposes and humans approve — but some proposals shouldn't be delegated to a first draft at all:</p>
   <ul>
-    <li><strong>Security-sensitive code</strong> (authn/authz, crypto, session handling): AI may review and explain; a human writes or line-by-line owns the implementation.</li>
+    <li><strong>Security-sensitive code</strong> (authentication/authorization, crypto, session handling): AI may review and explain; a human writes the implementation, or owns it line by line.</li>
     <li><strong>The business invariants themselves:</strong> the 0.85 threshold is a clinical-financial policy decision. AI can implement a change to it; only the accountable humans can decide it.</li>
     <li><strong>Anything you couldn't explain to an auditor:</strong> in a regulated domain, "the AI generated it and tests passed" is not a control. Every merged change needs a human who can narrate what it does and why.</li>
   </ul>
@@ -1556,7 +1563,7 @@ Stop and show me if any existing test needs to change.</code></pre>
    ├─ App.jsx                       ← shell: header + the one page so far
    ├─ api/priorAuth.js              ← the ONLY file that talks HTTP
    ├─ components/
-   │  ├─ RequestList.jsx            ← fetch, filter by status, render table
+   │  ├─ RequestList.jsx            ← load via the API client, filter, render
    │  ├─ StatusBadge.jsx            ← pure: status in, colored badge out
    │  └─ StatusBadge.test.jsx       ← one starter test (Vitest + RTL)
    ├─ test/setup.js
@@ -1721,6 +1728,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   </ul>
 
   <h2>Validated acceptance criteria</h2>
+  <p>Triage is a diagnostic bolt: the intent above is unambiguous, so the team validated these criteria up front. The full elaboration beat — AI clarifying questions and all — returns in the construction bolts (Modules 10 and 12).</p>
   <ol class="criteria">
     <li>A ranked hypothesis list grounded in the real source, with the top hypothesis named to a specific line.</li>
     <li>A minimal reproduction: a failing test (or exact curl sequence) demonstrating observed vs. expected.</li>
@@ -1830,14 +1838,14 @@ Stop and show me if any existing test needs to change.</code></pre>
 
   <h2>The four keys, one at a time</h2>
   <p><strong>Lead time &amp; deployment frequency</strong> improve semi-naturally with AI — <em>on one condition: batch size stays small</em>. The classic failure: AI generates large, plausible PRs; they pile up at human review; "coding time" shrinks while lead time <em>grows</em>. The bottleneck doesn't disappear — it relocates to validation. Countermeasures, all of which you already practice: bolt-sized units of work, automated first-pass review on every PR (Module 26) so a human is never the first filter, and <strong>PR pickup time</strong> as your early-warning gauge — it's the first number to move when review is drowning.</p>
-  <p><strong>Change failure rate &amp; recovery time</strong> are the endangered pair — throughput up, stability at risk, per the 2025 findings. These you defend deliberately: the test suite as a merge <em>gate</em> (Module 11's suite isn't pedagogy, it's your CFR defense), named-human validation checkpoints (Module 14), rollback fluency so recovery is a reflex, and escaped-defect tagging so instability surfaces in week two, not quarter three.</p>
+  <p><strong>Change failure rate (CFR) &amp; recovery time</strong> are the endangered pair — throughput up, stability at risk, per the 2025 findings. These you defend deliberately: the test suite as a merge <em>gate</em> (Module 11's suite isn't pedagogy, it's your CFR defense), named-human validation checkpoints (Module 14), rollback fluency so recovery is a reflex, and escaped-defect tagging so instability surfaces in week two, not quarter three.</p>
 
   <h2>SPACE, dimension by dimension</h2>
   <ul>
     <li><strong>Satisfaction:</strong> quarterly survey, baselined before rollout. Watch the AI-specific drain — validation fatigue. If reviewers report drowning, throughput is borrowing against burnout.</li>
     <li><strong>Performance:</strong> outcomes only — escape rate, rework share, revert rate. This is where "faster" is tested against "better."</li>
     <li><strong>Activity:</strong> refuse it as a target, report it only as a denominator. Goodhart's law — when a measure becomes a target, it ceases to be a good measure — is not optional here: any activity number you reward, AI will manufacture.</li>
-    <li><strong>Communication &amp; collaboration:</strong> review turnaround and knowledge distribution. Mob Elaboration and persistent context genuinely move this — decisions stop living in one head. Bus factor is a workable proxy.</li>
+    <li><strong>Communication &amp; collaboration:</strong> review turnaround and knowledge distribution. Mob Elaboration and persistent context genuinely move this — decisions stop living in one head. Bus factor — how many people would have to vanish before the knowledge is lost — is a workable proxy.</li>
     <li><strong>Efficiency &amp; flow:</strong> measure where the <em>waiting moved</em>. AI shrinks writing time and grows queue time at checkpoints; end-to-end flow only improves if validation keeps pace — which is why validation attention is a first-class metric in this course.</li>
   </ul>
 
@@ -1920,7 +1928,7 @@ every clarifying question you need answered.</code></pre>
   <h2>Validated acceptance criteria</h2>
   <ol class="criteria">
     <li>A "New request" form collects <code>memberId</code>, <code>providerNpi</code>, <code>serviceCode</code>, <code>diagnosisCode</code>, <code>requestedUnits</code>, and submits via a new <code>submitRequest(...)</code> in <code>src/api/priorAuth.js</code>.</li>
-    <li>Success shows an inline result: the returned status badge and score (e.g. "Approved · 0.90" or "Pending review · 0.72"), and the list reflects the new request.</li>
+    <li>Success shows an inline result: the returned status badge and score (e.g. "Approved · 0.90" or "Pending review · 0.70"), and the list reflects the new request.</li>
     <li>Client pre-checks NPI (10 digits) and units (≥ 1) before sending; any server 400 shows the <code>ProblemDetail</code> detail verbatim.</li>
     <li>No scoring logic appears anywhere in the UI — status and score come only from the response.</li>
     <li>At least one component test: an invalid NPI blocks submission with a visible message; <code>npm test</code> is green.</li>
@@ -1967,13 +1975,15 @@ Show me the file-change plan first; wait for my go before editing.</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <pre class="code code--term"><code><span class="p">$</span> cd labs/priorauth-service &amp;&amp; mvn spring-boot:run
+    <pre class="code code--term"><code><span class="c"># terminal 1:</span>
+<span class="p">$</span> cd labs/priorauth-service &amp;&amp; mvn spring-boot:run
+<span class="c"># terminal 2:</span>
 <span class="p">$</span> cd labs/priorauth-web &amp;&amp; npm run dev
 <span class="c"># in the portal: submit serviceCode 99213, diagnosis M54.5, 1 unit</span>
 <span class="c">#   → "Approved · 0.90" (routine visit clears the 0.85 line)</span>
 <span class="c"># submit serviceCode 70551 (MRI) → "Pending review" with a lower score</span>
 <span class="c"># submit a 3-digit NPI → blocked client-side; force-send via curl to see the server 400 agree</span>
-<span class="p">$</span> npm test</code></pre>
+<span class="p">$</span> npm test  <span class="c"># in labs/priorauth-web</span></code></pre>
   </div>
 
   <div class="callout callout--try">
@@ -2072,7 +2082,7 @@ Show me the file-change plan first; wait for my go before editing.</code></pre>
 <span class="c">#   → row flips to Pending review, action disappears</span>
 <span class="c"># appeal the same id again via curl → 409, with the same ProblemDetail</span>
 <span class="c">#   sentence the portal would display — the server's rule, one voice</span>
-<span class="p">$</span> npm test</code></pre>
+<span class="p">$</span> npm test  <span class="c"># in labs/priorauth-web</span></code></pre>
   </div>
 
   <div class="callout callout--try">

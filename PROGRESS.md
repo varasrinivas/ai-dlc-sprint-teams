@@ -80,4 +80,12 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   m21 METR follow-up corrected against METR's Feb-2026 update, m25/m26 elaboration + trust
   beats, m28 tree ellipsis, m30 409 comment, m31 exact error string; verified
   claude-sonnet-4-6 in m26's workflow is a live model id)
+- 2026-07-20 · second full validation pass (automated 32/32 PASS + 7-track parallel content
+  review): fixed both WARNs — m07 "Next" pointer corrected (m08/m09 come before the first
+  construction bolt), m26 Copilot panel given a concrete settings-path snippet + the
+  copilot-instructions.md repo-awareness note — plus nits across m09 (elaboration-collapse
+  sentence), m16 (NPI gloss, authn/authz expanded, phrasing), m20 (CFR + bus-factor glosses),
+  m26 ("Fix with Copilot" softened), m27 (shaped `claude mcp add`), m28 (RequestList "fetch"
+  wording), m29 (impossible 0.72 → 0.70, terminal comments), m30 (npm test cwd comment);
+  left as intentional: m01 `.stops` inline positioning, prose-guided Copilot panels in m06/m10–m13
 - _(add a line per session: date · module · what changed)_
