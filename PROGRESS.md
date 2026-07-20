@@ -66,4 +66,7 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
 - 2026-07-18 · added m21 (productivity evidence for leadership) + docs/leadership-brief.md; renumbered m22–m28; leadership productivity lens added to CLAUDE.md
 - 2026-07-18 · added Everyday developer craft track (m08 daily toolkit, m09 defect raising); renumbered m10–m28; added independent-research section (DORA 2025, METR RCT) to m21
 - 2026-07-18 · created the Leading the transformation track (m19 scoreboard, m20 engineering the metrics, m21 evidence moved in); renumbered m22–m28
+- 2026-07-20 · resynced `build/` fragments from the player: restored the four missing fragments
+  (m24–m27) and refreshed 13 stale ones (m05, m10–m18, m21–m23) that still held pre-renumbering
+  content — `course/index.html` is the source of truth; `build/` is gitignored working files
 - _(add a line per session: date · module · what changed)_
