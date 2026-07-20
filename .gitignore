@@ -1,6 +1,8 @@
 # authoring scratch
 build/
 *.plan.md
+.playwright-mcp/
+m09-verify-light.png
 
 # node / tooling
 node_modules/
