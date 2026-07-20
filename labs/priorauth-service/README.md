@@ -67,6 +67,9 @@ Browse the database at `http://localhost:8080/h2-console`
 A request is auto-approved when the score is **>= 0.85** (`AUTO_APPROVE_THRESHOLD`); otherwise
 it becomes `PENDING_REVIEW`.
 
+> **Utilization policy (UM-401):** requests of **10 or more units** require human review before
+> approval. The engine's high-units penalty is the implementation of this policy.
+
 ## Project layout
 
 ```

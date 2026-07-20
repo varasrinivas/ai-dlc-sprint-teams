@@ -89,8 +89,10 @@ Display font Space Grotesk, body Newsreader, mono JetBrains Mono. Reduced motion
 - Keys: `<span class="kbd">Tab</span>`.
 
 ### Lab-only components
-- `<div class="scenario callout"><div class="callout__label">Sprint story</div><p>…</p></div>`
-- `<ol class="criteria"> … </ol>` — numbered acceptance criteria.
+- `<div class="scenario"><div class="callout__label">Intent</div><p>…</p></div>` — the bolt's
+  intent statement (every built lab uses the bare `scenario` class and the label "Intent").
+- `<ol class="criteria"> … </ol>` — numbered acceptance criteria. (Established exception:
+  concept modules also use it for numbered step sequences, e.g. m22's retrofit steps.)
 - Dual-path block (tab switching is wired in the player JS):
   ```html
   <div class="paths">
@@ -102,9 +104,10 @@ Display font Space Grotesk, body Newsreader, mono JetBrains Mono. Reduced motion
     <div class="panel" data-panel="cop"> … </div>
   </div>
   ```
-- `<div class="expected callout"><div class="callout__label">Expected output</div> … </div>`
+- `<div class="expected"><div class="callout__label">Expected output</div> … </div>`
 - `<ul class="checklist"> … </ul>` — reviewer checklist.
-- `<div class="verify callout"><div class="callout__label">Verify it</div> … </div>`
+- `<div class="verify"><div class="callout__label">Verify it</div> … </div>`
+  (`scenario` / `expected` / `verify` are styled standalone — do not add the `callout` class.)
 
 ### Animation blocks (CSS already present; reuse the markup)
 - **Two-lane hero** (`.lanes` … `.mover--slow` / `.mover--fast`) — see module `m01`. Traditional vs

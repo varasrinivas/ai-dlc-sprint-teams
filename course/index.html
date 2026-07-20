@@ -443,7 +443,7 @@ pre.code.code--term code{color:var(--term-ink)}
 
   <div class="callout callout--try">
     <div class="callout__label">Before the next module</div>
-    <p>Open <code>labs/priorauth-service</code> and read the four files under <code>.claude/</code>. Notice how each one is short and specific. Over the next modules you'll learn to write your own — starting with Skills.</p>
+    <p>Open <code>labs/priorauth-service</code> and read the three files under <code>.claude/</code>. Notice how each one is short and specific. Over the next modules you'll learn to write your own — starting with Skills.</p>
   </div>
 </article>
 
@@ -529,7 +529,7 @@ report findings grouped by severity with a file:line and a concrete fix.</code><
   <p>Four fields carry the weight:</p>
   <ul>
     <li><strong><code>description</code></strong> drives delegation — Claude reads it to decide when to hand a task off. Specific, action-oriented phrasing ("use proactively before commits touching auth") makes it delegate more readily.</li>
-    <li><strong><code>tools</code></strong> is least-privilege. List only what the job needs — a reviewer gets read-only <code>Read, Grep, Glob</code>. Omit the field and it inherits every tool.</li>
+    <li><strong><code>tools</code></strong> is least-privilege. List only what the job needs — the shipped reviewer gets <code>Read, Grep, Glob</code> plus <code>Bash</code> (just enough to run <code>git diff</code>), and nothing that can edit a file. Omit the field and it inherits every tool.</li>
     <li><strong><code>model</code></strong> pins <code>sonnet</code>, <code>opus</code>, or <code>haiku</code>, or says <code>inherit</code> to match your main session.</li>
     <li><strong>Location</strong> sets scope, as above.</li>
   </ul>
@@ -539,7 +539,7 @@ report findings grouped by severity with a file:line and a concrete fix.</code><
   <p>To use one, Claude delegates automatically when a task matches the description, or you invoke it explicitly:</p>
   <div class="snippet">
     <div class="snippet__cap">explicit invocation in a Claude Code session</div>
-    <pre class="code code--term"><code><span class="p">&gt;</span> use the code-reviewer subagent to review my staged changes</span></code></pre>
+    <pre class="code code--term"><code><span class="p">&gt;</span> use the code-reviewer subagent to review my staged changes</code></pre>
   </div>
 
   <div class="callout callout--note">
@@ -570,7 +570,7 @@ report findings grouped by severity with a file:line and a concrete fix.</code><
   <ol class="criteria">
     <li>A code-review agent exists, scoped to <em>this repo's</em> conventions (the layering, the DTO rule, the <code>0.85</code> threshold, test coverage).</li>
     <li>Running it on a change produces findings grouped by severity, each with a <code>file:line</code> and a concrete fix.</li>
-    <li>The agent is <strong>read-only</strong> — it reports, it never edits code.</li>
+    <li>The agent <strong>reports, it never edits</strong> — nothing in its <code>tools</code> can modify a file. (The shipped <code>code-reviewer.md</code> does carry <code>Bash</code>, just enough to run <code>git diff</code>; it's the prompt, not the tool list, that forbids fixes.)</li>
     <li><em>Stretch:</em> a second, specialized agent for security-sensitive changes.</li>
   </ol>
 
@@ -605,7 +605,15 @@ report findings grouped by severity with file:line and a fix.</code></pre>
         <li>In the editor, open the Source Control / changes view and request a Copilot review of your uncommitted changes.</li>
         <li>On a pull request, add <strong>Copilot as a reviewer</strong> (or enable automatic Copilot review for the repo) so it comments on the diff.</li>
         <li>Read its inline comments the same way you'd read a human reviewer's.</li>
+        <li>Encode your conventions in <code>.github/copilot-instructions.md</code> — that file is what makes Copilot's review repo-aware instead of generic.</li>
       </ul>
+      <div class="snippet">
+        <div class="snippet__cap">chat fallback — a convention-aware review prompt</div>
+        <pre class="code"><code>@workspace Review my uncommitted changes against the conventions in
+.github/copilot-instructions.md: the layering, the DTO rule, the 0.85
+threshold, and test coverage. Group findings by severity, each with a
+file:line and a concrete fix.</code></pre>
+      </div>
       <div class="callout callout--note">
         <div class="callout__label">The trade-off worth noticing</div>
         <p>The Claude subagent is <em>yours</em>: you wrote its standard, so it reviews against your layering, your DTO rule, your <code>0.85</code> threshold. Copilot's reviewer is turnkey and zero-setup, but far less customizable to your conventions. On a migrating team, use both — Copilot for a quick generic pass, the subagent for a review that knows your codebase.</p>
@@ -634,7 +642,7 @@ One blocking issue: a scoring change landed without a matching test.
 
   <h2>Review checklist</h2>
   <ul class="checklist">
-    <li>The agent's <code>tools</code> are read-only — it can't modify code.</li>
+    <li>The agent's <code>tools</code> include nothing that can modify a file (<code>Bash</code> for <code>git diff</code> is the shipped agent's one deliberate exception — check its prompt forbids edits).</li>
     <li>Its <code>description</code> says clearly when to use it.</li>
     <li>It references this repo's conventions (open <code>CLAUDE.md</code>), not generic advice.</li>
     <li>It catches a <em>real</em> issue when you plant one (see Verify).</li>
@@ -865,7 +873,7 @@ One blocking issue: a scoring change landed without a matching test.
 
   <div class="callout callout--note">
     <div class="callout__label">Before you start</div>
-    <p>You need: a recent Node.js (for the npm install path), VS Code (or a JetBrains IDE) for Copilot, a GitHub account with Copilot access, and a Claude subscription or Anthropic API key. Install steps drift as tools evolve — if anything below doesn't match what you see, trust the official docs over this page.</p>
+    <p>You need: a recent Node.js (for the npm install path), VS Code (or a JetBrains IDE) for Copilot, a GitHub account with Copilot access, a Claude subscription or Anthropic API key, and Java 17 + Maven — the service's build and tests depend on them, and the verify step below runs <code>mvn test</code>. Install steps drift as tools evolve — if anything below doesn't match what you see, trust the official docs over this page.</p>
   </div>
 
   <h2>Install both</h2>
@@ -964,6 +972,8 @@ request routed to a human reviewer?</code></pre>
     <p>As a team new to this codebase, we want an accurate architecture summary and a trace of one request's full journey, so that we can plan future bolts on real understanding rather than guesses.</p>
   </div>
 
+  <p>In a full bolt, the AI would now elaborate this intent — proposing criteria and asking clarifying questions before anything is built (the Mob Elaboration beat you'll run for real in Module 10). Bolt 0 is read-only, so elaboration collapses into the prompts themselves, and the criteria below come pre-validated.</p>
+
   <h2>Validated acceptance criteria</h2>
   <ol class="criteria">
     <li>A one-page architecture summary: layers, key classes, and how they depend on each other.</li>
@@ -1013,7 +1023,12 @@ request routed to a human reviewer?</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p>Run the app, POST the MRI request from the README's curl examples, and confirm the stored status and score match the trace. The explanation isn't validated until the running system agrees with it.</p>
+    <p>Run the app, POST the MRI request, and confirm the stored status and score match the trace. The explanation isn't validated until the running system agrees with it.</p>
+    <pre class="code code--term"><code><span class="p">$</span> mvn spring-boot:run   <span class="c"># in labs/priorauth-service</span>
+<span class="p">$</span> curl -X POST http://localhost:8080/api/v1/prior-auth \
+  -H "Content-Type: application/json" \
+  -d '{"memberId":"MBR-2002","providerNpi":"1234567890","serviceCode":"70551","diagnosisCode":"R51.9","requestedUnits":1}'
+<span class="c"># expect: "status":"PENDING_REVIEW" and a 0.70 score — exactly what the trace predicted</span></code></pre>
   </div>
 </article>
 
@@ -1421,7 +1436,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <h2>Data that never enters a prompt or a context file</h2>
   <ul>
     <li><strong>Secrets:</strong> credentials, tokens, connection strings. Not in prompts, not in <code>CLAUDE.md</code>, not in workflow YAML — CI secrets live in the secret store, which is exactly what <code>/install-github-app</code> sets up.</li>
-    <li><strong>PHI and member data:</strong> real member IDs, provider NPIs, diagnoses tied to people. The labs use synthetic data (<code>MBR-1001</code>) by design; production debugging with AI must use the same discipline — redact or synthesize before you paste.</li>
+    <li><strong>PHI (Protected Health Information) and member data:</strong> real member IDs, provider NPIs, diagnoses tied to people. The labs use synthetic data (<code>MBR-1001</code>) by design; production debugging with AI must use the same discipline — redact or synthesize before you paste.</li>
     <li><strong>The quiet leak path:</strong> logs and stack traces pasted into chat. A "harmless" exception dump can carry a member ID in a field name. The security-reviewer subagent in this repo exists partly to catch data escaping into logs at all.</li>
   </ul>
 
@@ -1701,8 +1716,8 @@ Stop and show me if any existing test needs to change.</code></pre>
       <div class="snippet">
         <div class="snippet__cap">the triage sequence</div>
         <pre class="code"><code>1. Reviewers report large PT requests auto-approving despite policy
-   saying 10+ units gets scrutiny. Read the rules engine and give me
-   ranked hypotheses with file:line for each.
+   (quoted in the README) saying 10 or more units gets scrutiny. Read
+   the rules engine and give me ranked hypotheses with file:line for each.
 
 2. Write a failing test that reproduces hypothesis #1. Run it and
    show me the failure output. Do NOT fix anything.
@@ -1713,7 +1728,20 @@ Stop and show me if any existing test needs to change.</code></pre>
       <p>"Do NOT fix anything" matters — triage and fixing are different checkpoints, and in AI-DLC the fix is its own bolt with its own validation.</p>
     </div>
     <div class="panel" data-panel="cop">
-      <p>Same sequence, editor-native: ask Copilot Chat (<code>@workspace</code>) for ranked hypotheses about the symptom; open the test class and use <code>/tests</code>-style generation to draft the failing reproduction, running it yourself; then have Chat draft the ticket body and — if your team tracks work on GitHub — file it as an Issue, where it can later be assigned onward (GitHub's coding agent can even take an issue and open a draft PR, a preview of the automation track).</p>
+      <p>Same sequence, editor-native — in Copilot Chat:</p>
+      <div class="snippet">
+        <div class="snippet__cap">the triage sequence, Copilot Chat</div>
+        <pre class="code"><code>1. @workspace Reviewers report large PT requests auto-approving despite
+   policy (quoted in the README) saying 10 or more units gets scrutiny.
+   Rank hypotheses with file:line for each.
+
+2. Draft a failing test in AutoApprovalServiceTest that reproduces
+   hypothesis #1. I'll run it myself. Do NOT fix anything.
+
+3. Draft a defect ticket from this evidence: observed vs expected,
+   the reproduction, suspected location, proposed severity + why.</code></pre>
+      </div>
+      <p>Run the test yourself, then — if your team tracks work on GitHub — file the ticket as an Issue, where it can later be assigned onward (GitHub's coding agent can even take an issue and open a draft PR, a preview of the automation track).</p>
     </div>
   </div>
 
@@ -1732,7 +1760,14 @@ Stop and show me if any existing test needs to change.</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p>Hand the ticket to a teammate (or a fresh AI session) with no other context and ask them to reproduce. If they can get to red in five minutes, the ticket is done. File it — Module 12 picks it up.</p>
+    <p>Hand the ticket to a teammate (or a fresh AI session) with no other context and ask them to reproduce. If they can get to red in five minutes, the ticket is done:</p>
+    <pre class="code code--term"><code><span class="p">$</span> mvn test -Dtest=AutoApprovalServiceTest   <span class="c"># the new boundary test fails</span>
+<span class="c"># or live — submit exactly 10 units and watch it auto-approve:</span>
+<span class="p">$</span> curl -X POST http://localhost:8080/api/v1/prior-auth \
+  -H "Content-Type: application/json" \
+  -d '{"memberId":"MBR-2003","providerNpi":"1234567890","serviceCode":"97110","diagnosisCode":"M54.5","requestedUnits":10}'
+<span class="c"># expect (the bug): "status":"APPROVED" at 0.90 — policy says review</span></code></pre>
+    <p>File it — Module 12 picks it up.</p>
   </div>
 </article>
 
@@ -1740,7 +1775,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <p class="lede">This track is for the person who has to stand in front of leadership — and for leaders themselves. Before you can move the numbers or prove them, you have to know the instruments. Three frameworks dominate how engineering productivity is judged today: <b>DORA's four keys</b>, <b>SPACE</b>, and DORA's <b>AI Capabilities Model</b>. This module is the scoreboard tour.</p>
 
   <h2>DORA's four keys: speed and stability, always together</h2>
-  <p>Two decades of DORA research settled on four measures of software delivery, deliberately paired so neither half can be gamed at the other's expense:</p>
+  <p>A decade of DORA research settled on four measures of software delivery, deliberately paired so neither half can be gamed at the other's expense:</p>
   <ul>
     <li><strong>Deployment frequency</strong> — how often you ship to production. <strong>Lead time for changes</strong> — commit to running in production. Together: <em>speed</em>.</li>
     <li><strong>Change failure rate</strong> — the share of deployments causing degraded service. <strong>Failed deployment recovery time</strong> — how fast you restore. Together: <em>stability</em>.</li>
@@ -1887,7 +1922,7 @@ every clarifying question you need answered.</code></pre>
 - one Vitest+RTL test: invalid NPI blocks submit with a message
 Show me the file-change plan first; wait for my go before editing.</code></pre>
       </div>
-      <p>At the checkpoint, the plan should touch exactly four files: the API client, the new component, its test, and <code>App.jsx</code>. A plan that wants to edit <code>RequestList</code> or add a state library is scope creep — push back before approving, not after.</p>
+      <p>At the checkpoint, the plan should touch exactly four files: the API client, the new component, its test, and <code>App.jsx</code>. Criterion 2's "list reflects the new request" also lives in <code>App.jsx</code>: on a successful submit it re-renders <code>RequestList</code> (a <code>key</code> bump that remounts it is the simplest mechanism) — no edits inside <code>RequestList</code> needed. A plan that wants to edit <code>RequestList</code> itself or add a state library is scope creep — push back before approving, not after.</p>
     </div>
     <div class="panel" data-panel="cop">
       <p>In VS Code, open <code>src/api/priorAuth.js</code> and let ghost text complete <code>submitRequest</code> from the file's own patterns — the existing functions make it a one-Tab job. Then use Copilot Chat with the validated criteria pasted in to generate <code>SubmitForm.jsx</code> and its test (<code>@workspace</code> so it sees the instructions file), and accept completions for the <code>App.jsx</code> wiring yourself. Same criteria, smaller supervised steps.</p>

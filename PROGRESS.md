@@ -69,4 +69,10 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
 - 2026-07-20 · resynced `build/` fragments from the player: restored the four missing fragments
   (m24–m27) and refreshed 13 stale ones (m05, m10–m18, m21–m23) that still held pre-renumbering
   content — `course/index.html` is the source of truth; `build/` is gitignored working files
+- 2026-07-20 · full validation pass (automated 32/32 PASS + six-track content review): applied all
+  WARN fixes — m04 Java/Maven prereq, m06 elaboration note + runnable verify curl, m09 Copilot
+  triage prompts + runnable verify + policy UM-401 planted in the service README, m16 PHI expanded,
+  m19 "a decade of DORA", m22 file count, m24 tools bullet + stray `</span>`, m25 read-only wording
+  + Copilot review prompt, m29 list-refresh mechanism named; CLAUDE.md kit section updated to match
+  built lab markup (bare `scenario`/`expected`/`verify`, "Intent" label)
 - _(add a line per session: date · module · what changed)_
