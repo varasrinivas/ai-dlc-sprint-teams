@@ -405,13 +405,22 @@ pre.code.code--term code{color:var(--term-ink)}
 
   <h2>The retrofit, step by step</h2>
   <ol class="criteria">
-    <li><strong>Write the context files.</strong> Start with <code>CLAUDE.md</code> at the repo root: what the app is, the stack, the conventions (and anti-conventions), how to build and test, and the known gotchas. Mirror the essentials into <code>.github/copilot-instructions.md</code>. Commit both — they're shared team memory.</li>
+    <li><strong>Write the context files.</strong> Don't start from a blank page: launch <code>claude</code> in the repo and run <code>/init</code> — Claude Code scans the codebase and drafts a <code>CLAUDE.md</code> at the root for you. Then edit the draft to add what a scan can't see: the conventions (and anti-conventions), the known gotchas, and exactly how to build and test. Mirror the essentials into <code>.github/copilot-instructions.md</code> (Copilot Chat in VS Code has a <em>Generate instructions</em> action that drafts this file the same way). Commit both — they're shared team memory.</li>
     <li><strong>Make sure there are tests, and say how to run them.</strong> If coverage is thin, this is the moment to add it (AI can help — see the testing lab). Tests are your safety net for everything that follows.</li>
     <li><strong>Capture your first repeated workflow as a Skill.</strong> The fifth time you paste the same release checklist or rules explanation, move it into a <code>.claude/skills/&lt;name&gt;/SKILL.md</code> with a sharp description so it triggers on the right tasks.</li>
     <li><strong>Add a review subagent.</strong> A <code>.claude/agents/code-reviewer.md</code> gives you a consistent first-pass reviewer that keeps the verbose diff-reading out of your main session.</li>
     <li><strong>Automate on pull requests.</strong> Run <code>claude /install-github-app</code> to add PR review to CI, so every change gets a first look automatically.</li>
     <li><strong>Write it down and roll it out.</strong> A short "how we use AI here" note in the README, and a light convention for keeping the context files current, turns a personal setup into a team capability.</li>
   </ol>
+
+  <div class="snippet">
+    <div class="snippet__cap">bootstrapping the context file (step 1)</div>
+    <pre class="code code--term"><code><span class="p">$</span> cd your-repo
+<span class="p">$</span> claude
+<span class="p">&gt;</span> /init
+<span class="c"># Claude Code explores the codebase and writes a draft CLAUDE.md —</span>
+<span class="c"># review it, cut what's wrong, add the gotchas only your team knows</span></code></pre>
+  </div>
 
   <h2>What that looks like in this repo</h2>
   <p>Our Prior Auth service has been retrofitted exactly this way. Here's the layer that was added on top of the application code — no source files changed:</p>
