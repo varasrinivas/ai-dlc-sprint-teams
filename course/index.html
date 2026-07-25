@@ -1311,7 +1311,8 @@ the bug as stated.</code></pre>
 
   <div class="expected">
     <div class="callout__label">Expected output</div>
-    <p>A one-character production change (<code>&gt;</code> → <code>&gt;=</code>), a clarified constant, one new boundary test, one updated table row. Small diff, high confidence — the signature of a good defect bolt.</p>
+    <p>A one-character production change (<code>&gt;</code> → <code>&gt;=</code>), a clarified constant, and one new boundary test. Small diff, high confidence — the signature of a good defect bolt.</p>
+    <p>Note what <em>doesn't</em> change: no row in Module 11's table moves. Those rows use 1 and 24 units, and the fix only affects a request of exactly 10 — so every expected score stays put. What goes stale is the prose around them: the table's <code>// units &gt; 10</code> comment, the constant's Javadoc, and the README's rules list. If you find yourself editing a row's expected <em>value</em> to get green, stop — that's the fix overreaching.</p>
   </div>
 
   <h2>Validation checklist</h2>

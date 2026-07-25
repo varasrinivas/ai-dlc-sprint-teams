@@ -129,4 +129,14 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   pass. Added a third elaboration ruling (compare with `isCloseTo(..., within(1e-9))`), annotated
   criterion 1, and extended the recompute-by-hand checklist line. Also confirmed m11's other claim:
   no penalty subset reaches 0.85, so the `>=` boundary really is unreachable through a real request
+- 2026-07-25 · m12 · ran the defect bolt for real on top of a reconstructed m11 suite. The red-first
+  sequence works exactly as written: the 10-unit test fails at `0.9` against an expected `0.75` (the
+  message criterion 1 promises), the `>` → `>=` fix turns it green at 10 tests, 9 units still scores
+  0.90, and the seeded rows stay 0.90/0.70/0.75 — so m05's tour and m06's verify survive the fix.
+  Live verify confirmed 10 units → PENDING_REVIEW at 0.75. One correction: the Expected output
+  claimed "one updated table row", but **no m11 row changes** — those rows use 1 and 24 units, and
+  only exactly-10 is affected. What goes stale is prose (the table comment, the constant's Javadoc,
+  the README list). Rewrote that line and added a note warning that editing a row's expected value
+  to reach green means the fix has overreached. Criterion 3 already hedged correctly ("rows or
+  comments"), so it needed no change
 - _(add a line per session: date · module · what changed)_
