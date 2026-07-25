@@ -1210,15 +1210,16 @@ table of cases (inputs, expected score, expected routing) before
 writing any tests. Flag anything about the current rules that makes
 them hard to test.</code></pre>
   </div>
-  <p>Two things a good elaboration surfaces here — and the team's rulings:</p>
+  <p>Three things a good elaboration surfaces here — and the team's rulings:</p>
   <ul>
     <li><em>"Each penalty needs isolation and at least one stacking case."</em> — <strong>Agreed.</strong> Four single-factor rows, one stacked row (MRI + high units → 0.55).</li>
     <li><em>"No current input can score exactly 0.85, so the <code>&gt;=</code> boundary is untestable through real requests."</em> — This is elaboration earning its keep: a genuine gap in the rules, found before a line of test code. <strong>Ruling:</strong> document the boundary semantics with a direct comparison test against the constant, and record in <code>CLAUDE.md</code> that any future penalty summing to a 0.85 score must auto-approve.</li>
+    <li><em>"How exactly do we compare the scores?"</em> — <strong>With a tolerance, not <code>isEqualTo</code>.</strong> The penalties are <code>double</code>s, so stacked subtractions land a hair off the decimal: <code>0.90 − 0.20 − 0.15</code> is <code>0.5499999999999999</code>, not <code>0.55</code>. The four single-factor rows happen to come out exact, so a suite that asserts equality goes green on them and red on the stacked row alone. Use AssertJ's <code>isCloseTo(expected, within(1e-9))</code> — the spec is the decimal, not its binary representation.</li>
   </ul>
 
   <h2>Validated acceptance criteria</h2>
   <ol class="criteria">
-    <li>A parameterized test (<code>@ParameterizedTest</code> + <code>@CsvSource</code>) covers: routine (0.90), MRI (0.70), units &gt; 10 (0.75), blank diagnosis (0.80), and the stacked case (0.55).</li>
+    <li>A parameterized test (<code>@ParameterizedTest</code> + <code>@CsvSource</code>) covers: routine (0.90), MRI (0.70), units &gt; 10 (0.75), blank diagnosis (0.80), and the stacked case (0.55, which the engine computes as <code>0.5499999999999999</code> — compare with a tolerance).</li>
     <li>Routing is asserted alongside score: which cases auto-approve, which go to review.</li>
     <li>The <code>&gt;=</code> threshold semantics are pinned by an explicit boundary test.</li>
     <li><code>explain(...)</code> has at least one test proving the message matches the outcome.</li>
@@ -1251,7 +1252,7 @@ existing routine-visit test. Run ./mvnw test and show me the result.</code></pre
 
   <h2>Validation checklist</h2>
   <ul class="checklist">
-    <li>Recompute two rows by hand from the penalty constants — never trust generated expected values unchecked.</li>
+    <li>Recompute two rows by hand from the penalty constants — never trust generated expected values unchecked. The decimal you get by hand is the spec; the tolerance is what absorbs the binary drift.</li>
     <li>Temporarily change a penalty and confirm the suite fails; revert. A spec that can't fail specifies nothing.</li>
     <li>The elaboration finding about the unreachable 0.85 score is recorded in <code>CLAUDE.md</code>.</li>
   </ul>

@@ -120,4 +120,13 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   appeal — the obvious "appeal twice" test passes for the wrong reason and leaves the one-appeal rule
   unexercised. Added it as a fifth elaboration ruling, split criterion 2 into the two distinct 409
   paths, added a checklist line, and fixed a pre-existing "three answers"/"three tests" count drift
+- 2026-07-25 · m11 · ran the test-lock bolt for real (all 5 criteria met: 5-row `@CsvSource` table,
+  routing asserted alongside score, boundary pinned against the constant, `explain(...)` covered,
+  8 tests green; mutation check red-then-green as the checklist demands) — then reverted so the
+  one-starter-test gap survives. Construction surfaced a floating-point trap: the stacked row the
+  module specifies as **0.55** is `0.5499999999999999` in doubles, so `isEqualTo(0.55)` fails on
+  exactly the row m11 tells students to write, while the four single-factor rows come out exact and
+  pass. Added a third elaboration ruling (compare with `isCloseTo(..., within(1e-9))`), annotated
+  criterion 1, and extended the recompute-by-hand checklist line. Also confirmed m11's other claim:
+  no penalty subset reaches 0.85, so the `>=` boundary really is unreachable through a real request
 - _(add a line per session: date · module · what changed)_
