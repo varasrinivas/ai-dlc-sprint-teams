@@ -111,4 +111,13 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   bumped the pinned review model from `claude-sonnet-4-6` to `claude-sonnet-5` in both workflows and
   m26's "Model & cost" bullet — the old id is still live, but it is a generation behind and students
   copy that line straight into their own CI
+- 2026-07-25 · m10 · ran the appeals bolt for real to prove the lab is completable (all 5 acceptance
+  criteria verified: DENIED → PENDING_REVIEW with `appealedAt` set and `decidedAt` kept, 409 on both
+  conflict paths, 400 on a blank reason, layering intact, suite green at 5 tests) — then reverted the
+  implementation so the intentional gap survives. Construction surfaced a state-machine subtlety the
+  elaboration had missed: appealing twice *in a row* trips the status guard (the request is already
+  PENDING_REVIEW), so the `appealedAt` rule is only reachable after the reviewer denies the first
+  appeal — the obvious "appeal twice" test passes for the wrong reason and leaves the one-appeal rule
+  unexercised. Added it as a fifth elaboration ruling, split criterion 2 into the two distinct 409
+  paths, added a checklist line, and fixed a pre-existing "three answers"/"three tests" count drift
 - _(add a line per session: date · module · what changed)_

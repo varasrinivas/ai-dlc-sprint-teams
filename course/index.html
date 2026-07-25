@@ -1116,21 +1116,22 @@ and ask me every clarifying question you need answered first.</code></pre>
   <ul>
     <li><em>"Should an appeal introduce a new status, or reuse PENDING_REVIEW?"</em> — <strong>Reuse PENDING_REVIEW.</strong> The reviewer flow already exists; keep the enum stable this bolt.</li>
     <li><em>"How do we enforce 'one appeal only'?"</em> — <strong>Add an <code>appealedAt</code> timestamp</strong> to <code>com/portal/priorauth/domain/PriorAuthRequest.java</code>; a second appeal is rejected with 409.</li>
+    <li><em>"When is a second appeal even reachable?"</em> — <strong>Only after the reviewer denies the first one.</strong> Straight after an appeal the request is PENDING_REVIEW, so a second attempt trips the <em>status</em> guard, not the one-appeal guard — same 409, different rule. Test the two paths separately or the <code>appealedAt</code> rule ships unexercised. This is the ruling an elaboration is most likely to miss; if your AI doesn't raise it, construction will.</li>
     <li><em>"Does an appeal clear <code>decidedAt</code>?"</em> — <strong>No, keep it.</strong> It stays as the record of the denial being appealed (<code>appealedAt</code> marks the appeal); the reviewer's next decision overwrites it.</li>
     <li><em>"Is the reason required, and where is it stored?"</em> — <strong>Required</strong> (validated, max 500 chars), recorded via the existing <code>decisionReason</code> on the transition.</li>
   </ul>
   <div class="callout callout--key">
     <div class="callout__label">Persist the decisions</div>
-    <p>Those three answers go into the service's <code>CLAUDE.md</code> before construction starts. That's persistent context doing its job: the next bolt's AI won't re-ask.</p>
+    <p>Those rulings go into the service's <code>CLAUDE.md</code> before construction starts. That's persistent context doing its job: the next bolt's AI won't re-ask.</p>
   </div>
 
   <h2>Validated acceptance criteria</h2>
   <ol class="criteria">
     <li><code>POST /api/v1/prior-auth/{id}/appeal</code> with a required <code>reason</code> moves a DENIED request to PENDING_REVIEW and sets <code>appealedAt</code>.</li>
-    <li>Appealing a request that isn't DENIED, or appealing twice, returns 409 with a clear message.</li>
+    <li>Appealing a request that isn't DENIED returns 409 with a clear message — and so does a second appeal, once the reviewer has denied the first one. Each message names the rule that fired.</li>
     <li>A missing/blank reason returns 400 via the existing validation path.</li>
     <li>The change respects the layering: controller → service → <code>applyDecision</code>-style state change; entity exposed only as <code>AuthResponse</code>.</li>
-    <li>Tests cover the happy path and both 409 cases; <code>./mvnw test</code> is green.</li>
+    <li>Tests cover the happy path and both conflict guards separately; <code>./mvnw test</code> is green.</li>
   </ol>
 
   <h2>Construction, both ways</h2>
@@ -1153,7 +1154,7 @@ Show me the plan of file changes first; wait for my go before editing.</code></p
       <p>That last line is the checkpoint. Review the proposed file list — it should touch the domain entity, <code>PriorAuthService</code>, the controller, a new DTO, and a test — approve it, then let it build and run the tests itself.</p>
     </div>
     <div class="panel" data-panel="cop">
-      <p>Copilot works best here in smaller supervised steps: use Copilot Chat (with <code>@workspace</code>) to draft the domain method and service method from the validated plan, accept and adjust the ghost-text completions for the controller endpoint and DTO, then ask Chat to generate the three tests. Same plan, same criteria — you're the one holding the sequence.</p>
+      <p>Copilot works best here in smaller supervised steps: use Copilot Chat (with <code>@workspace</code>) to draft the domain method and service method from the validated plan, accept and adjust the ghost-text completions for the controller endpoint and DTO, then ask Chat to generate the tests. Same plan, same criteria — you're the one holding the sequence.</p>
     </div>
   </div>
 
@@ -1168,7 +1169,8 @@ Show me the plan of file changes first; wait for my go before editing.</code></p
     <li>The controller stays thin and returns <code>AuthResponse</code>, never the entity.</li>
     <li>Error paths use the existing <code>GlobalExceptionHandler</code> shapes (409/400).</li>
     <li>Tests actually assert the transitions, not just status codes.</li>
-    <li><code>CLAUDE.md</code> now records the three elaboration decisions.</li>
+    <li>You hit both 409s yourself and read the messages — a second appeal <em>straight after</em> an appeal is the status guard, not the one-appeal guard.</li>
+    <li><code>CLAUDE.md</code> now records the elaboration decisions.</li>
   </ul>
 
   <div class="verify">
