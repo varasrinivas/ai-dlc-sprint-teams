@@ -20,7 +20,7 @@ service API at `/api/v1/prior-auth` — it holds no business rules of its own.
 
 ```bash
 # 1. start the API first (separate terminal):
-cd ../priorauth-service && mvn spring-boot:run     # :8080
+cd ../priorauth-service && ./mvnw spring-boot:run     # :8080
 
 # 2. then the web app:
 npm install

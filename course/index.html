@@ -523,23 +523,26 @@ Apply this whenever the task touches auto-approval scoring...</code></pre>
   </ul>
 
   <div class="snippet">
-    <div class="snippet__cap">the shape of the code-reviewer shipped in this repo</div>
+    <div class="snippet__cap">the code-reviewer shipped in this repo (frontmatter verbatim; body abridged)</div>
     <pre class="code"><code>---
 name: code-reviewer
-description: Reviews recent changes for quality and this repo's
-  conventions. Use proactively after implementing a change or before a PR.
+description: Reviews recent code changes in the Prior Auth service for
+  quality, correctness, and adherence to this repo's conventions. Use
+  proactively after implementing a change or before opening a pull
+  request. Invoke explicitly with "have the code-reviewer subagent
+  review my changes".
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
-You are a senior code reviewer for the Prior Auth service.
-When invoked, get the diff, read the changed files and CLAUDE.md, and
-report findings grouped by severity with a file:line and a concrete fix.</code></pre>
+You are a senior code reviewer for the Prior Auth Portal service…
+(…the full ~60-line prompt walks the review: diff, changed files,
+CLAUDE.md conventions, findings grouped by severity with file:line)</code></pre>
   </div>
 
   <p>Four fields carry the weight:</p>
   <ul>
     <li><strong><code>description</code></strong> drives delegation — Claude reads it to decide when to hand a task off. Specific, action-oriented phrasing ("use proactively before commits touching auth") makes it delegate more readily.</li>
-    <li><strong><code>tools</code></strong> is least-privilege. List only what the job needs — the shipped reviewer gets <code>Read, Grep, Glob</code> plus <code>Bash</code> (just enough to run <code>git diff</code>), and nothing that can edit a file. Omit the field and it inherits every tool.</li>
+    <li><strong><code>tools</code></strong> is least-privilege. List only what the job needs — the shipped reviewer gets <code>Read, Grep, Glob</code> plus <code>Bash</code> (needed to run <code>git diff</code>) and no edit tools — though Bash could technically touch files, so it's the prompt's "you do not modify code" rule that truly forbids fixes (the next module returns to this). Omit the field and it inherits every tool.</li>
     <li><strong><code>model</code></strong> pins <code>sonnet</code>, <code>opus</code>, or <code>haiku</code>, or says <code>inherit</code> to match your main session.</li>
     <li><strong>Location</strong> sets scope, as above.</li>
   </ul>
@@ -604,8 +607,8 @@ report findings grouped by severity with file:line and a fix.</code></pre>
       <p><strong>Then run it on a change:</strong> make a small edit to the service, stage it, and invoke the reviewer.</p>
       <div class="snippet">
         <div class="snippet__cap">Claude Code session</div>
-        <pre class="code code--term"><code><span class="p">$</span> git add -A
-<span class="p">&gt;</span> use the code-reviewer subagent to review my staged changes</code></pre>
+        <pre class="code code--term"><code><span class="p">$</span> git add -A   <span class="c"># in your shell first</span>
+<span class="p">&gt;</span> use the code-reviewer subagent to review my staged changes   <span class="c"># then inside claude</span></code></pre>
       </div>
     </div>
 
@@ -675,6 +678,11 @@ One blocking issue: a scoring change landed without a matching test.
   <div class="scenario">
     <div class="callout__label">Intent</div>
     <p>As a team, we want every pull request to receive an automated first-pass review the moment it opens, and to be able to ask an assistant for help directly in the PR — without leaking secrets or running up surprise costs.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Before you start</div>
+    <p>This lab runs in GitHub's cloud, so it needs three things the earlier labs didn't. First, <strong>push <code>labs/priorauth-service</code> to GitHub as its own repository</strong> — GitHub Actions only runs workflows that sit at a repo's <em>root</em> <code>.github/workflows/</code>, so inside the course repo these workflows never fire (<code>git init</code> in the service folder, or copy it out, then push). Second, you need <strong>admin rights</strong> on that repository to install the GitHub App. Third, have your <strong>Claude credential</strong> ready — a Pro/Max login or an Anthropic API key — for the secret step below. Criteria 2–3 apply to the Claude path only; Copilot's built-in review needs neither a workflow nor a secret.</p>
   </div>
 
   <h2>Acceptance criteria</h2>
@@ -790,7 +798,7 @@ One blocking issue: a scoring change landed without a matching test.
   }
 }</code></pre>
   </div>
-  <p>For this Java service that command might run your formatter or a quick <code>mvn -q compile</code>; the <code>matcher</code> is the tool name to intercept.</p>
+  <p>For this Java service that command might run your formatter or a quick <code>./mvnw -q compile</code>; the <code>matcher</code> is the tool name to intercept.</p>
 
   <div class="callout callout--warn">
     <div class="callout__label">Hooks run as code</div>
@@ -890,7 +898,8 @@ One blocking issue: a scoring change landed without a matching test.
 
   <div class="callout callout--note">
     <div class="callout__label">Before you start</div>
-    <p>You need: a recent Node.js (for the npm install path), VS Code (or a JetBrains IDE) for Copilot, a GitHub account with Copilot access, a Claude subscription or Anthropic API key, and Java 17 + Maven — the service's build and tests depend on them, and the verify step below runs <code>mvn test</code>. Install steps drift as tools evolve — if anything below doesn't match what you see, trust the official docs over this page.</p>
+    <p>First, get the code: <code>git clone https://github.com/varasrinivas/ai-dlc-sprint-teams.git</code> (or download the ZIP from GitHub). Everything hands-on happens inside it — the service lives at <code>labs/priorauth-service</code>.</p>
+    <p>You need: a recent Node.js (for the npm install path), VS Code (or a JetBrains IDE) for Copilot, a GitHub account with Copilot access, a Claude subscription or Anthropic API key, and Java 17 or newer. You do <em>not</em> need to install Maven — the service ships the Maven Wrapper, and the verify step below runs <code>./mvnw test</code>, which downloads the right Maven automatically on first run. On Windows, run the course's terminal commands in Git Bash (installed with Git) so <code>./mvnw</code> and the <code>curl</code> snippets work as written; in PowerShell use <code>mvnw.cmd</code> instead. Install steps drift as tools evolve — if anything below doesn't match what you see, trust the official docs over this page.</p>
   </div>
 
   <h2>Install both</h2>
@@ -928,7 +937,7 @@ request routed to a human reviewer?</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p>Three checks before you move on: <code>claude</code> launches and answers with specifics from <em>this</em> repo (not generic Spring talk); Copilot ghost text appears when you type in a Java file; and <code>mvn test</code> passes in <code>labs/priorauth-service</code> — the safety net every later bolt relies on.</p>
+    <p>Three checks before you move on: <code>claude</code> launches and answers with specifics from <em>this</em> repo (not generic Spring talk); Copilot ghost text appears when you type in a Java file; and <code>./mvnw test</code> passes in <code>labs/priorauth-service</code> — the safety net every later bolt relies on.</p>
   </div>
 
   <div class="callout callout--try">
@@ -959,10 +968,10 @@ request routed to a human reviewer?</code></pre>
 
   <h2>The layers, and why they're strict</h2>
   <ul>
-    <li><strong>Web</strong> (<code>com/portal/priorauth/web/PriorAuthController.java</code> + DTO records — DTOs, the data-transfer objects that define what crosses the wire) — validates input, maps to <code>AuthResponse</code>, never touches the database. Errors go through <code>GlobalExceptionHandler</code>.</li>
-    <li><strong>Service</strong> (<code>com/portal/priorauth/service/PriorAuthService.java</code>) — orchestrates: create, score, persist, and the reviewer's decide flow.</li>
-    <li><strong>Rules engine</strong> (<code>com/portal/priorauth/service/AutoApprovalService.java</code>) — pure and deterministic: base 0.90, minus penalties (review-required service −0.20, units &gt; 10 −0.15, blank diagnosis −0.10), clamped, compared to <code>AUTO_APPROVE_THRESHOLD = 0.85</code>.</li>
-    <li><strong>Domain</strong> (<code>com/portal/priorauth/domain/PriorAuthRequest.java</code>) — the entity mutates only through <code>applyDecision(...)</code>; the lifecycle is SUBMITTED → APPROVED | PENDING_REVIEW → (reviewer) APPROVED | DENIED.</li>
+    <li><strong>Web</strong> (<code>src/main/java/com/portal/priorauth/web/PriorAuthController.java</code> + DTO records — DTOs, the data-transfer objects that define what crosses the wire) — validates input, maps to <code>AuthResponse</code>, never touches the database. Errors go through <code>GlobalExceptionHandler</code>.</li>
+    <li><strong>Service</strong> (<code>src/main/java/com/portal/priorauth/service/PriorAuthService.java</code>) — orchestrates: create, score, persist, and the reviewer's decide flow.</li>
+    <li><strong>Rules engine</strong> (<code>src/main/java/com/portal/priorauth/service/AutoApprovalService.java</code>) — pure and deterministic: base 0.90, minus penalties (review-required service −0.20, units &gt; 10 −0.15, blank diagnosis −0.10), clamped, compared to <code>AUTO_APPROVE_THRESHOLD = 0.85</code>.</li>
+    <li><strong>Domain</strong> (<code>src/main/java/com/portal/priorauth/domain/PriorAuthRequest.java</code>) — the entity mutates only through <code>applyDecision(...)</code>; the lifecycle is SUBMITTED → APPROVED | PENDING_REVIEW → (reviewer) APPROVED | DENIED.</li>
   </ul>
   <p>These boundaries aren't ceremony — they're what makes AI work <em>reviewable</em>. When every bolt's output must fit a known shape, validation checkpoints are fast.</p>
 
@@ -970,7 +979,7 @@ request routed to a human reviewer?</code></pre>
   <div class="snippet">
     <div class="snippet__cap">terminal</div>
     <pre class="code code--term"><code><span class="p">$</span> cd labs/priorauth-service
-<span class="p">$</span> mvn spring-boot:run
+<span class="p">$</span> ./mvnw spring-boot:run
 <span class="p">$</span> curl localhost:8080/api/v1/prior-auth   <span class="c"># three seeded requests</span></code></pre>
   </div>
   <p>The seed data shows all three paths: a routine visit (auto-approved at 0.90), an MRI (0.70, review), and a 24-unit therapy request (0.75, review).</p>
@@ -1041,11 +1050,12 @@ request routed to a human reviewer?</code></pre>
   <div class="verify">
     <div class="callout__label">Verify it</div>
     <p>Run the app, POST the MRI request, and confirm the stored status and score match the trace. The explanation isn't validated until the running system agrees with it.</p>
-    <pre class="code code--term"><code><span class="p">$</span> mvn spring-boot:run   <span class="c"># in labs/priorauth-service</span>
+    <pre class="code code--term"><code><span class="p">$</span> ./mvnw spring-boot:run   <span class="c"># in labs/priorauth-service</span>
 <span class="p">$</span> curl -X POST http://localhost:8080/api/v1/prior-auth \
   -H "Content-Type: application/json" \
   -d '{"memberId":"MBR-2002","providerNpi":"1234567890","serviceCode":"70551","diagnosisCode":"R51.9","requestedUnits":1}'
-<span class="c"># expect: "status":"PENDING_REVIEW" and a 0.70 score — exactly what the trace predicted</span></code></pre>
+<span class="c"># expect: "status":"PENDING_REVIEW" and "approvalScore":0.7 — exactly what the trace predicted</span></code></pre>
+    <p>Windows note: run this in Git Bash (the <code>\</code> line continuations and quoting are bash syntax). In PowerShell, <code>curl</code> is an alias for something else — use <code>curl.exe</code> with the whole command on one line.</p>
   </div>
 </article>
 
@@ -1106,6 +1116,7 @@ and ask me every clarifying question you need answered first.</code></pre>
   <ul>
     <li><em>"Should an appeal introduce a new status, or reuse PENDING_REVIEW?"</em> — <strong>Reuse PENDING_REVIEW.</strong> The reviewer flow already exists; keep the enum stable this bolt.</li>
     <li><em>"How do we enforce 'one appeal only'?"</em> — <strong>Add an <code>appealedAt</code> timestamp</strong> to <code>com/portal/priorauth/domain/PriorAuthRequest.java</code>; a second appeal is rejected with 409.</li>
+    <li><em>"Does an appeal clear <code>decidedAt</code>?"</em> — <strong>No, keep it.</strong> It stays as the record of the denial being appealed (<code>appealedAt</code> marks the appeal); the reviewer's next decision overwrites it.</li>
     <li><em>"Is the reason required, and where is it stored?"</em> — <strong>Required</strong> (validated, max 500 chars), recorded via the existing <code>decisionReason</code> on the transition.</li>
   </ul>
   <div class="callout callout--key">
@@ -1119,7 +1130,7 @@ and ask me every clarifying question you need answered first.</code></pre>
     <li>Appealing a request that isn't DENIED, or appealing twice, returns 409 with a clear message.</li>
     <li>A missing/blank reason returns 400 via the existing validation path.</li>
     <li>The change respects the layering: controller → service → <code>applyDecision</code>-style state change; entity exposed only as <code>AuthResponse</code>.</li>
-    <li>Tests cover the happy path and both 409 cases; <code>mvn test</code> is green.</li>
+    <li>Tests cover the happy path and both 409 cases; <code>./mvnw test</code> is green.</li>
   </ol>
 
   <h2>Construction, both ways</h2>
@@ -1162,8 +1173,8 @@ Show me the plan of file changes first; wait for my go before editing.</code></p
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <pre class="code code--term"><code><span class="p">$</span> mvn test
-<span class="p">$</span> mvn spring-boot:run
+    <pre class="code code--term"><code><span class="p">$</span> ./mvnw test
+<span class="p">$</span> ./mvnw spring-boot:run
 <span class="c"># deny a pending request (id 2 from seed data), then appeal it:</span>
 <span class="p">$</span> curl -X POST localhost:8080/api/v1/prior-auth/2/decision \
     -H "Content-Type: application/json" \
@@ -1223,11 +1234,11 @@ them hard to test.</code></pre>
         <div class="snippet__cap">construction prompt</div>
         <pre class="code"><code>Implement the validated test plan in AutoApprovalServiceTest using
 JUnit 5, AssertJ, and @ParameterizedTest with @CsvSource. Keep the
-existing routine-visit test. Run mvn test and show me the result.</code></pre>
+existing routine-visit test. Run ./mvnw test and show me the result.</code></pre>
       </div>
     </div>
     <div class="panel" data-panel="cop">
-      <p>Open <code>AutoApprovalServiceTest.java</code>, paste the validated case table as a comment, and let ghost text build the parameterized test under it — Copilot is excellent at completing test tables. Use Chat for the boundary and <code>explain(...)</code> tests, then run <code>mvn test</code> yourself.</p>
+      <p>Open <code>AutoApprovalServiceTest.java</code>, paste the validated case table as a comment, and let ghost text build the parameterized test under it — Copilot is excellent at completing test tables. Use Chat for the boundary and <code>explain(...)</code> tests, then run <code>./mvnw test</code> yourself.</p>
     </div>
   </div>
 
@@ -1245,7 +1256,7 @@ existing routine-visit test. Run mvn test and show me the result.</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p><code>mvn test</code> green, and the mutation check above red-then-green. This suite is now the safety net the next two bolts stand on.</p>
+    <p><code>./mvnw test</code> green, and the mutation check above red-then-green. This suite is now the safety net the next two bolts stand on.</p>
   </div>
 </article>
 
@@ -1284,14 +1295,14 @@ the bug as stated.</code></pre>
     <div class="panel is-active" data-panel="cc">
       <div class="snippet">
         <div class="snippet__cap">the red-first sequence</div>
-        <pre class="code"><code>1. Add the failing 10-unit test only. Run mvn test - show me the red.
+        <pre class="code"><code>1. Add the failing 10-unit test only. Run ./mvnw test - show me the red.
 2. Now make the minimal fix in AutoApprovalService and update any test
-   rows the spec change affects. Run mvn test - show me the green.</code></pre>
+   rows the spec change affects. Run ./mvnw test - show me the green.</code></pre>
       </div>
       <p>Insisting on seeing the red first is the checkpoint. A fix without a preceding failure proves nothing.</p>
     </div>
     <div class="panel" data-panel="cop">
-      <p>Write the failing test yourself with ghost-text help (it's three lines), run <code>mvn test</code> to see red, then ask Copilot Chat for the minimal fix and the affected test-row updates. Same sequence, you drive the runner.</p>
+      <p>Write the failing test yourself with ghost-text help (it's three lines), run <code>./mvnw test</code> to see red, then ask Copilot Chat for the minimal fix and the affected test-row updates. Same sequence, you drive the runner.</p>
     </div>
   </div>
 
@@ -1306,11 +1317,12 @@ the bug as stated.</code></pre>
     <li>The diff touches nothing beyond the boundary and its tests.</li>
     <li>9 units still passes clean — the fix didn't overreach.</li>
     <li>The spec ruling ("10 or more") is recorded in <code>CLAUDE.md</code>.</li>
+    <li>The docs caught up too: the README's rules list ("units &gt; 10") and the constant's Javadoc ("above this many units") now read "10 or more".</li>
   </ul>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p><code>mvn test</code> green, then live: submit a 10-unit request and confirm it now lands in PENDING_REVIEW at 0.75.</p>
+    <p><code>./mvnw test</code> green, then live: submit a 10-unit request and confirm it now lands in PENDING_REVIEW at 0.75.</p>
     <pre class="code code--term"><code><span class="p">$</span> curl -X POST localhost:8080/api/v1/prior-auth \
   -H "Content-Type: application/json" \
   -d '{"memberId":"MBR-2003","providerNpi":"1234567890","serviceCode":"97110","diagnosisCode":"M54.5","requestedUnits":10}'
@@ -1346,7 +1358,7 @@ which rules fired. Two design options with trade-offs. No code yet.</code></pre>
     <li><code>AUTO_APPROVE_THRESHOLD</code> stays public and unchanged; the engine stays pure (no I/O).</li>
     <li>The entire Module 11 table passes <strong>unmodified</strong> — the proof of zero behavior change.</li>
     <li>Each rule gains one focused unit test of its own.</li>
-    <li><code>explain(...)</code> can name the rules that fired.</li>
+    <li><code>explain(...)</code> can name the rules that fired — the one sanctioned exception to "zero behavior change": its <em>wording</em> grows richer (per the elaboration ruling above), so the Module 11 explain-text test may change here, and only here. Scores and statuses still must not move.</li>
   </ol>
 
   <h2>Construction, both ways</h2>
@@ -1359,13 +1371,13 @@ which rules fired. Two design options with trade-offs. No code yet.</code></pre>
       <div class="snippet">
         <div class="snippet__cap">construction prompt</div>
         <pre class="code"><code>Implement the penalty-supplier design we validated. Work in steps:
-extract one rule at a time, running mvn test after each extraction.
+extract one rule at a time, running ./mvnw test after each extraction.
 Stop and show me if any existing test needs to change.</code></pre>
       </div>
       <p>"Stop if a test needs to change" is the tripwire — in a zero-behavior-change bolt, a failing old test means the design drifted, and that's a mob decision, not the AI's.</p>
     </div>
     <div class="panel" data-panel="cop">
-      <p>Drive the extraction yourself with Copilot accelerating each step: create the <code>ScoringRule</code> interface, then extract rules one at a time — ghost text will draft each rule class from the original condition. Run <code>mvn test</code> between extractions; use Chat to generate the per-rule unit tests at the end.</p>
+      <p>Drive the extraction yourself with Copilot accelerating each step: create the <code>ScoringRule</code> interface, then extract rules one at a time — ghost text will draft each rule class from the original condition. Run <code>./mvnw test</code> between extractions; use Chat to generate the per-rule unit tests at the end.</p>
     </div>
   </div>
 
@@ -1384,12 +1396,12 @@ Stop and show me if any existing test needs to change.</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p><code>mvn test</code> fully green, then a live spot check: the seeded MRI request still lands at 0.70 / PENDING_REVIEW. Structure changed; behavior provably didn't.</p>
+    <p><code>./mvnw test</code> fully green, then a live spot check: the seeded MRI request still lands at 0.70 / PENDING_REVIEW. Structure changed; behavior provably didn't.</p>
   </div>
 </article>
 
 <article class="mod" data-mod="m14">
-  <p class="lede">Four bolts in, you've noticed where AI-DLC actually spends human effort: the <b>checkpoints</b>. Validation is the load-bearing wall of the whole methodology — so it deserves its own craft. This module is that craft, for the two artifacts you validate most: proposed plans and produced code.</p>
+  <p class="lede">Four construction bolts in, you've noticed where AI-DLC actually spends human effort: the <b>checkpoints</b>. Validation is the load-bearing wall of the whole methodology — so it deserves its own craft. This module is that craft, for the two artifacts you validate most: proposed plans and produced code.</p>
 
   <h2>Checkpoint one: the plan, before construction</h2>
   <p>Cheapest place to catch problems. Before approving any AI-proposed plan, ask four questions:</p>
@@ -1463,7 +1475,7 @@ Stop and show me if any existing test needs to change.</code></pre>
 
   <h2>Data that never enters a prompt or a context file</h2>
   <ul>
-    <li><strong>Secrets:</strong> credentials, tokens, connection strings. Not in prompts, not in <code>CLAUDE.md</code>, not in workflow YAML — CI secrets live in the secret store, which is exactly what <code>/install-github-app</code> sets up.</li>
+    <li><strong>Secrets:</strong> credentials, tokens, connection strings. Not in prompts, not in <code>CLAUDE.md</code>, not in workflow YAML — CI secrets live in the secret store — the PR-automation lab (Module 26) sets this up.</li>
     <li><strong>PHI (Protected Health Information) and member data:</strong> real member IDs, provider NPIs (National Provider Identifiers), diagnoses tied to people. The labs use synthetic data (<code>MBR-1001</code>) by design; production debugging with AI must use the same discipline — redact or synthesize before you paste.</li>
     <li><strong>The quiet leak path:</strong> logs and stack traces pasted into chat. A "harmless" exception dump can carry a member ID in a field name. The security-reviewer subagent in this repo exists partly to catch data escaping into logs at all.</li>
   </ul>
@@ -1505,7 +1517,7 @@ Stop and show me if any existing test needs to change.</code></pre>
     <li>the acceptance criteria the mob validated are demonstrably met (tests + a live run, not just green CI);</li>
     <li>a named human validated the diff and can explain it — the Module 16 auditability line;</li>
     <li>elaboration rulings from the bolt are persisted to <code>CLAUDE.md</code> / the decisions file;</li>
-    <li>the automated first-pass review (the subagent or PR workflow) ran and its findings were addressed or explicitly waived.</li>
+    <li>the automated first-pass review (the subagent or PR workflow — built in Modules 25–26; the lab repo ships them ready-made) ran and its findings were addressed or explicitly waived.</li>
   </ul>
 
   <div class="callout callout--key">
@@ -1524,7 +1536,7 @@ Stop and show me if any existing test needs to change.</code></pre>
 
   <h2>A staged rollout that survives contact with reality</h2>
   <ol class="criteria">
-    <li><strong>Ready the ground (a week, part-time).</strong> Make the repo AI-ready — persistent context, tests, the review subagent, PR automation (the whole automation track). Rolling out AI-DLC on a context-free, test-poor repo multiplies every risk.</li>
+    <li><strong>Ready the ground (a week, part-time).</strong> Make the repo AI-ready — persistent context, tests, the review subagent, PR automation (the whole automation track — Modules 22–27, the track right after this one). Rolling out AI-DLC on a context-free, test-poor repo multiplies every risk.</li>
     <li><strong>Pilot one unit of work.</strong> Pick something real but severable — an appeals-flow-sized feature, not the billing rewrite. Run it fully: Mob Elaboration, bolts, checkpoints, DoD. The goal is a complete experience of the loop, not a big win.</li>
     <li><strong>Retro on the mechanism, not just the outcome.</strong> Where did elaboration drag? Which checkpoints felt real, which felt rubber-stamp? What did validation attention cost? Fix the loop before scaling it.</li>
     <li><strong>Name champions and pair deliberately.</strong> One or two people who ran the pilot pair through the next units with everyone else. Facilitating a mob session and validating well are learned by doing-alongside, not by slide deck.</li>
@@ -1565,11 +1577,11 @@ Stop and show me if any existing test needs to change.</code></pre>
    ├─ components/
    │  ├─ RequestList.jsx            ← load via the API client, filter, render
    │  ├─ StatusBadge.jsx            ← pure: status in, colored badge out
-   │  └─ StatusBadge.test.jsx       ← one starter test (Vitest + RTL)
+   │  └─ StatusBadge.test.jsx       ← one starter test (Vitest + React Testing Library)
    ├─ test/setup.js
    └─ …                             ← plus the entry point &amp; styles</code></pre>
   </div>
-  <p>Stack: <b>React 19 + Vite</b>, plain JavaScript, no router, no state library — deliberately small, because the course is about the workflow, not the framework. Tests run on <b>Vitest + React Testing Library</b>. To run it, start the service first (<code>mvn spring-boot:run</code>), then <code>npm install &amp;&amp; npm run dev</code> and open <code>localhost:5173</code>.</p>
+  <p>Stack: <b>React 19 + Vite</b> (Vite is the dev server and build tool — it serves the app locally with instant reload and bundles it for production), plain JavaScript, no router, no state library — deliberately small, because the course is about the workflow, not the framework. Tests run on <b>Vitest + React Testing Library</b> (RTL). To run it, start the service first (<code>./mvnw spring-boot:run</code>), then <code>npm install &amp;&amp; npm run dev</code> and open <code>localhost:5173</code>.</p>
 
   <h2>One boundary, one direction</h2>
   <div class="snippet">
@@ -1684,7 +1696,8 @@ Stop and show me if any existing test needs to change.</code></pre>
       <p>Beyond full sessions, Claude Code does quick one-shot work with <code>-p</code> — and reads whatever you pipe into it:</p>
       <div class="snippet">
         <pre class="code code--term"><code><span class="p">$</span> claude -p "write a conventional commit message for my staged changes"
-<span class="p">$</span> mvn test 2&gt;&amp;1 | claude -p "why did this test fail? shortest likely cause"</code></pre>
+<span class="p">$</span> ./mvnw test 2&gt;&amp;1 | claude -p "why did this test fail? shortest likely cause"
+<span class="c"># PowerShell users: drop the 2&gt;&amp;1 — just  ./mvnw test | claude -p "…"</span></code></pre>
       </div>
       <p>There's also a VS Code extension (and a JetBrains plugin) that puts Claude Code in a sidebar with proper diff views — same agent, gentler surface.</p>
     </div>
@@ -1723,7 +1736,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <h2>The three moves, with AI in each</h2>
   <ul>
     <li><strong>Analyze.</strong> Feed the AI the <em>symptom</em>, not a conclusion, and ask for ranked hypotheses against the actual code. Vague reports become searchable: "large requests auto-approving" plus the rules engine source is enough for a good tool to spot a boundary condition worth checking.</li>
-    <li><strong>Reproduce.</strong> An unreproduced defect is an opinion. The strongest reproduction in a tested codebase is a <em>failing test</em> — small, deterministic, and it doubles as the fix's finish line. A curl sequence is the acceptable fallback for behavior tests can't reach.</li>
+    <li><strong>Reproduce.</strong> An unreproduced defect is an opinion. The strongest reproduction in a tested codebase is a <em>failing test</em> — small, deterministic, and it doubles as the fix's finish line. A curl sequence is the acceptable fallback for behavior tests can't reach. Expect a twist here: an obviously large request (the seeded 24-unit one, say) reproduces <em>nothing</em> — it routes to review correctly. A first attempt that "fails to reproduce" is itself a clue: the report said <em>some</em> large requests, so probe the policy's edge, not its middle.</li>
     <li><strong>Raise.</strong> Have the AI draft the ticket from the evidence — then validate every sentence. You're accountable for what's filed; an AI-drafted ticket with an unverified claim is worse than a thin one, because it <em>looks</em> authoritative.</li>
   </ul>
 
@@ -1790,8 +1803,8 @@ Stop and show me if any existing test needs to change.</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <p>Hand the ticket to a teammate (or a fresh AI session) with no other context and ask them to reproduce. If they can get to red in five minutes, the ticket is done:</p>
-    <pre class="code code--term"><code><span class="p">$</span> mvn test -Dtest=AutoApprovalServiceTest   <span class="c"># the new boundary test fails</span>
+    <p>Hand the ticket to a teammate (or a fresh AI session) with no other context — on your branch, so the failing test rides along — and ask them to reproduce. If they can get to red in five minutes, the ticket is done:</p>
+    <pre class="code code--term"><code><span class="p">$</span> ./mvnw test -Dtest=AutoApprovalServiceTest   <span class="c"># the new boundary test fails</span>
 <span class="c"># or live — submit exactly 10 units and watch it auto-approve:</span>
 <span class="p">$</span> curl -X POST http://localhost:8080/api/v1/prior-auth \
   -H "Content-Type: application/json" \
@@ -1837,7 +1850,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <p class="lede">Knowing the scoreboard isn't moving it. This module is the playbook for making DORA and SPACE <b>actually improve</b> when AI arrives — by defending the metrics AI is documented to hurt, building the capabilities that unlock the ones it helps, and instrumenting so you can tell a learning curve from a failure.</p>
 
   <h2>The four keys, one at a time</h2>
-  <p><strong>Lead time &amp; deployment frequency</strong> improve semi-naturally with AI — <em>on one condition: batch size stays small</em>. The classic failure: AI generates large, plausible PRs; they pile up at human review; "coding time" shrinks while lead time <em>grows</em>. The bottleneck doesn't disappear — it relocates to validation. Countermeasures, all of which you already practice: bolt-sized units of work, automated first-pass review on every PR (Module 26) so a human is never the first filter, and <strong>PR pickup time</strong> as your early-warning gauge — it's the first number to move when review is drowning.</p>
+  <p><strong>Lead time &amp; deployment frequency</strong> improve semi-naturally with AI — <em>on one condition: batch size stays small</em>. The classic failure: AI generates large, plausible PRs; they pile up at human review; "coding time" shrinks while lead time <em>grows</em>. The bottleneck doesn't disappear — it relocates to validation. Countermeasures, all of which you already practice: bolt-sized units of work, automated first-pass review on every PR (Module 26) so a human is never the first filter, and <strong>PR pickup time</strong> (from a PR opening to a reviewer's first action on it) as your early-warning gauge — it's the first number to move when review is drowning.</p>
   <p><strong>Change failure rate (CFR) &amp; recovery time</strong> are the endangered pair — throughput up, stability at risk, per the 2025 findings. These you defend deliberately: the test suite as a merge <em>gate</em> (Module 11's suite isn't pedagogy, it's your CFR defense), named-human validation checkpoints (Module 14), rollback fluency so recovery is a reflex, and escaped-defect tagging so instability surfaces in week two, not quarter three.</p>
 
   <h2>SPACE, dimension by dimension</h2>
@@ -1976,7 +1989,7 @@ Show me the file-change plan first; wait for my go before editing.</code></pre>
   <div class="verify">
     <div class="callout__label">Verify it</div>
     <pre class="code code--term"><code><span class="c"># terminal 1:</span>
-<span class="p">$</span> cd labs/priorauth-service &amp;&amp; mvn spring-boot:run
+<span class="p">$</span> cd labs/priorauth-service &amp;&amp; ./mvnw spring-boot:run
 <span class="c"># terminal 2:</span>
 <span class="p">$</span> cd labs/priorauth-web &amp;&amp; npm run dev
 <span class="c"># in the portal: submit serviceCode 99213, diagnosis M54.5, 1 unit</span>
@@ -2074,7 +2087,9 @@ Show me the file-change plan first; wait for my go before editing.</code></pre>
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
-    <pre class="code code--term"><code><span class="c"># with both apps running — first manufacture a DENIED request (id 2 is seeded PENDING_REVIEW):</span>
+    <pre class="code code--term"><code><span class="c"># with both apps running. Restart the service first if it's been up since Module 10 —</span>
+<span class="c"># its verify steps already appealed id 2, and H2 resets to seed data on restart.</span>
+<span class="c"># Then manufacture a DENIED request (id 2 is seeded PENDING_REVIEW):</span>
 <span class="p">$</span> curl -X POST localhost:8080/api/v1/prior-auth/2/decision \
     -H "Content-Type: application/json" \
     -d '{"decision":"DENIED","reason":"insufficient documentation"}'
@@ -2097,6 +2112,11 @@ Show me the file-change plan first; wait for my go before editing.</code></pre>
   <div class="scenario">
     <div class="callout__label">Intent</div>
     <p>As the team, before we build more portal features, we want the current behavior locked by component tests, so that AI-assisted changes fail loudly when they break what already works.</p>
+  </div>
+
+  <div class="callout callout--warn">
+    <div class="callout__label">Prerequisite</div>
+    <p>This bolt tests the submit form from <strong>Module 29</strong> and the appeal flow from <strong>Module 30</strong> — the shipped app has neither, so half the criteria below have nothing to bite on until those bolts are done. Do them first (the request-list criteria still work if you only want a taste).</p>
   </div>
 
   <h2>Elaboration — the Mob Elaboration beat</h2>
@@ -2273,6 +2293,11 @@ if(cur<0) cur=0;
 /* deep links: #m07 (any case) opens that module, beating saved position */
 const hashMod = MODS.findIndex(m=>m.id===location.hash.slice(1).toLowerCase());
 if(hashMod>=0) cur=hashMod;
+/* follow hash edits in an already-open tab too (go() uses replaceState, so no loop) */
+window.addEventListener('hashchange',()=>{
+  const i=MODS.findIndex(m=>m.id===location.hash.slice(1).toLowerCase());
+  if(i>=0&&i!==cur) go(i);
+});
 
 /* ---- element refs ---- */
 const $=id=>document.getElementById(id);

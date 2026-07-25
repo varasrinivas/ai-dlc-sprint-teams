@@ -51,8 +51,8 @@ clamped to [0.0, 1.0]. If you change the scoring, update the tests in the same c
 ## Build & run
 
 ```bash
-mvn spring-boot:run        # starts on http://localhost:8080
-mvn test                   # runs the test suite
+./mvnw spring-boot:run        # starts on http://localhost:8080
+./mvnw test                   # runs the test suite
 ```
 
 Seed data loads three example requests on startup (one auto-approve, two review paths).

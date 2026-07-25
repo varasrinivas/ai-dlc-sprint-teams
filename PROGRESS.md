@@ -88,4 +88,19 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   m26 ("Fix with Copilot" softened), m27 (shaped `claude mcp add`), m28 (RequestList "fetch"
   wording), m29 (impossible 0.72 → 0.70, terminal comments), m30 (npm test cwd comment);
   left as intentional: m01 `.stops` inline positioning, prose-guided Copilot panels in m06/m10–m13
+- 2026-07-23 · student-perspective validation pass (browser walkthrough + labs actually attempted
+  on a Maven-less machine + 5-track content review): shipped the **Maven Wrapper** in
+  `labs/priorauth-service` (`mvnw`/`mvnw.cmd` + `.mvn/wrapper/`, verified `./mvnw test` green
+  with no Maven installed) and switched every `mvn` command to `./mvnw` across 12 modules +
+  service README/CLAUDE.md + web CLAUDE.md; m04 gained clone-the-repo + no-Maven-needed +
+  Git-Bash-on-Windows "Before you start"; m26 gained a "Before you start" warn callout (push the
+  service as its own GitHub repo — Actions won't run subfolder workflows — admin rights, Claude
+  credential, criteria 2–3 Claude-only); player gained a `hashchange` listener (deep links now
+  work in an already-open tab); plus fixes: m06 PowerShell/curl note + `approvalScore` field
+  named, m09 failed-repro-is-a-clue note + same-branch note, m10 `decidedAt` elaboration ruling,
+  m12 docs-catch-up checklist item, m13 AC5 marked the sanctioned tripwire exception, m14 "four
+  construction bolts", m16/m17/m18 forward pointers to Modules 22–27, m20 PR-pickup-time defined,
+  m24 verbatim frontmatter quote + honest Bash-can-edit wording, m25 annotated mixed terminal
+  block, m28 Vite/RTL glosses, m30 restart-the-service verify note, m31 prerequisite callout
+  (m29+m30), m05 full `src/main/java/` paths
 - _(add a line per session: date · module · what changed)_

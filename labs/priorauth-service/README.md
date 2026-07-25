@@ -7,13 +7,14 @@ features, writing tests, fixing bugs, refactoring — with Claude Code and GitHu
 ## Prerequisites
 
 - Java 17 or newer
-- Maven 3.9+
+- No Maven install needed — the repo ships the Maven Wrapper: use `./mvnw` (Windows
+  PowerShell: `mvnw.cmd`); it downloads Maven automatically on first run
 - (For the labs) Claude Code and/or GitHub Copilot — set up in Module 4
 
 ## Run it
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 The service starts on `http://localhost:8080`. Three example requests are seeded on startup.
