@@ -39,7 +39,7 @@ jobs:
           # API users: use anthropic_api_key.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Pick a model deliberately; Sonnet is a good default for routine review.
-          claude_args: "--model claude-sonnet-4-6"
+          claude_args: "--model claude-sonnet-5"
           prompt: |
             Review this pull request for the Prior Auth Portal service.
             Follow the conventions in CLAUDE.md and use the same standards as the

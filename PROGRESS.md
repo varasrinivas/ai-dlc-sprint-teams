@@ -103,4 +103,12 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   m24 verbatim frontmatter quote + honest Bash-can-edit wording, m25 annotated mixed terminal
   block, m28 Vite/RTL glosses, m30 restart-the-service verify note, m31 prerequisite callout
   (m29+m30), m05 full `src/main/java/` paths
+- 2026-07-25 · student-perspective validation pass (ran the course rather than reading it): `./mvnw
+  test` green, service booted and all lab verify curls behaved as documented (m05 seed 0.90/0.70/0.75,
+  m06 MRI → PENDING_REVIEW at 0.70, m09 10-unit → APPROVED at 0.90, m10 deny id 2 → DENIED and
+  `/appeal` → 404), `npm test` green in priorauth-web, and a browser walkthrough of all 32 modules
+  (tabs switch, progress counts, no roadmap placeholders, no tab/panel mismatches). One fix applied:
+  bumped the pinned review model from `claude-sonnet-4-6` to `claude-sonnet-5` in both workflows and
+  m26's "Model & cost" bullet — the old id is still live, but it is a generation behind and students
+  copy that line straight into their own CI
 - _(add a line per session: date · module · what changed)_

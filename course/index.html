@@ -711,7 +711,7 @@ One blocking issue: a scoring change landed without a matching test.
       <ul>
         <li><strong>Permissions:</strong> the moment a workflow declares a <code>permissions:</code> block, every unnamed scope resets to <code>none</code>. List them all — at least <code>contents: read</code>, <code>pull-requests: write</code>, <code>id-token: write</code>.</li>
         <li><strong>Credential:</strong> Pro/Max users use <code>claude_code_oauth_token</code>; API users use <code>anthropic_api_key</code>. Either way it's a secret, never inline.</li>
-        <li><strong>Model &amp; cost:</strong> pin a model with <code>claude_args: "--model claude-sonnet-4-6"</code>; gate cost with a <code>paths:</code> filter or the on-demand model.</li>
+        <li><strong>Model &amp; cost:</strong> pin a model with <code>claude_args: "--model claude-sonnet-5"</code>; gate cost with a <code>paths:</code> filter or the on-demand model.</li>
       </ul>
     </div>
 
