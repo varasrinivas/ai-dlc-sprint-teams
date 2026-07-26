@@ -139,4 +139,15 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   the README list). Rewrote that line and added a note warning that editing a row's expected value
   to reach green means the fix has overreached. Criterion 3 already hedged correctly ("rows or
   comments"), so it needed no change
+- 2026-07-26 · m13 · ran the refactor bolt for real. Criterion 3 holds: Module 11's table passes
+  **unmodified** against a penalty-supplier refactor (ScoringRule interface + 3 rule classes + a
+  fold in the service), 8 tests green, and the prescribed live spot check (seeded MRI at 0.70 /
+  PENDING_REVIEW) passes. But "zero behavior change" is not literally true: summing penalties and
+  subtracting once is a different floating-point operation from subtracting them one at a time, so
+  a stacked request goes from `0.5499999999999999` to exactly `0.55` (proved with a probe test and
+  through the API). Routing and the `%.2f` explain text are unmoved; only the raw score field
+  shifts, by ~1e-16 — absorbed by m11's tolerance. Two notes added: criterion 3 now defines what
+  "zero behavior change" covers and warns that an exact-equality table will appear to be *fixed*
+  by this bolt, and the verify block notes the seed has no stacked request, so the prescribed spot
+  check is structurally blind to this class of drift
 - _(add a line per session: date · module · what changed)_

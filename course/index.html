@@ -1360,7 +1360,7 @@ which rules fired. Two design options with trade-offs. No code yet.</code></pre>
   <ol class="criteria">
     <li>Each existing penalty becomes a named rule; the service iterates the rules to score.</li>
     <li><code>AUTO_APPROVE_THRESHOLD</code> stays public and unchanged; the engine stays pure (no I/O).</li>
-    <li>The entire Module 11 table passes <strong>unmodified</strong> — the proof of zero behavior change.</li>
+    <li>The entire Module 11 table passes <strong>unmodified</strong> — the proof of zero behavior change. "Zero behavior change" means <em>scores, routing and decisions</em>, not bit-identical doubles: folding the penalties into one subtraction is not the same floating-point operation as subtracting them one at a time, so a stacked request that scored <code>0.5499999999999999</code> before may score exactly <code>0.55</code> after. Routing doesn't move and <code>explain(...)</code>'s <code>%.2f</code> text doesn't move; only the raw score field shifts, by about 1e-16. That is the tolerance in Module 11's table doing its job — if your table asserts exact equality, this bolt will appear to <em>fix</em> a failing row, which is a confusing signal in a refactor that is supposed to change nothing.</li>
     <li>Each rule gains one focused unit test of its own.</li>
     <li><code>explain(...)</code> can name the rules that fired — the one sanctioned exception to "zero behavior change": its <em>wording</em> grows richer (per the elaboration ruling above), so the Module 11 explain-text test may change here, and only here. Scores and statuses still must not move.</li>
   </ol>
@@ -1401,6 +1401,7 @@ Stop and show me if any existing test needs to change.</code></pre>
   <div class="verify">
     <div class="callout__label">Verify it</div>
     <p><code>./mvnw test</code> fully green, then a live spot check: the seeded MRI request still lands at 0.70 / PENDING_REVIEW. Structure changed; behavior provably didn't.</p>
+    <p>Worth knowing what that spot check <em>can't</em> see: all three seeded requests trip at most one penalty, so none of them exercises the stacked path where the fold's arithmetic differs. Submit one yourself — an MRI (<code>70551</code>) with 24 units — and read the raw <code>approvalScore</code>. Routing and the <code>%.2f</code> reason are identical; the raw double is not. A spot check that only touches the seed data will tell you a refactor is clean whether or not it is.</p>
   </div>
 </article>
 
