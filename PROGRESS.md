@@ -150,4 +150,19 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   "zero behavior change" covers and warns that an exact-equality table will appear to be *fixed*
   by this bolt, and the verify block notes the seed has no stacked request, so the prescribed spot
   check is structurally blind to this class of drift
+- 2026-07-26 · m04/m06/m24/m25 · first pass with a **real Claude Code session** (`claude -p`, using the
+  repo's own login) rather than reading the prompts. m04's first-contact claim holds exactly — the
+  answer named the 0.90 base, all three penalties and the `>= 0.85` comparison, and unprompted it
+  flagged both defects found earlier by building (0.85 unreachable; the `> 10` off-by-one). m24/m25
+  verified end to end: `stream-json` shows the very first tool call is `Agent` with
+  `subagent_type: code-reviewer`, i.e. the shipped agent file is genuinely delegated to; it caught
+  the planted scoring-without-tests violation, grouped findings by severity with file:line, reported
+  rather than edited, and additionally spotted that the change left `SKILL.md` and the README stale —
+  noting a stale auto-loaded Skill "actively feeds the wrong penalty to the next AI-assisted change".
+  **m06 produced a live confident error**: a trace correct at every step that also asserted
+  "in IEEE-754 doubles `0.90 - 0.20` is actually `0.7000000000000001`". It is exactly `0.70` (verified
+  in Java). Captured it in m06 as a worked specimen, because the shape — a right answer with an
+  invented supporting detail — is harder to catch than the wrong-score case the module already
+  describes; added a checklist line about auditing asides. Also noted in m25 that a headless
+  `claude -p` review runs without shell access, so the subagent can't run the build
 - _(add a line per session: date · module · what changed)_

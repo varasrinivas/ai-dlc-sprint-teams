@@ -663,6 +663,7 @@ One blocking issue: a scoring change landed without a matching test.
 
   <div class="verify">
     <div class="callout__label">Verify it</div>
+    <p>One note if you script this with <code>claude -p</code> instead of an interactive session: the subagent's <code>Bash</code> is gated behind a permission prompt that headless mode can't answer, so it can't run <code>git diff</code> and falls back to reading files directly. The review still lands — it just can't run your build. Run it interactively when you want the suite executed as part of the review.</p>
     <p>Plant a deliberate violation, then prove the reviewer catches it. For example, change a penalty in <code>AutoApprovalService</code> <strong>without</strong> updating the test, or return the JPA entity from a controller method. Run the reviewer — it should flag it as Blocking or Recommended. Then fix it and re-run to confirm a clean report.</p>
   </div>
 
@@ -1040,10 +1041,17 @@ request routed to a human reviewer?</code></pre>
     <p>The trace should say, in effect: controller validates the DTO → <code>PriorAuthService.submit(...)</code> builds the entity → <code>AutoApprovalService.score(...)</code> returns 0.70 (0.90 − 0.20 for a review-required service) → below 0.85, so <code>applyDecision</code> sets PENDING_REVIEW → repository saves it. If either tool claims anything else — an extra layer, a different score — that's your validation checkpoint doing its job.</p>
   </div>
 
+  <div class="callout callout--warn">
+    <div class="callout__label">A real confident error, from this exact prompt</div>
+    <p>Run against this repo, Claude Code produced a trace that was correct at every step — and then added, in passing: <em>"in IEEE-754 doubles <code>0.90 - 0.20</code> is actually <code>0.7000000000000001</code>."</em> It isn't. In Java that subtraction is exactly <code>0.70</code>. The score was right, the layering was right, the <code>decidedAt</code>-stays-null detail was right — and one supporting sentence was fabricated, in the confident register of everything around it.</p>
+    <p>Notice the shape, because it's the one that gets past people: not a wrong answer, but a <strong>right answer with an invented justification</strong>. "Is the score 0.70?" catches nothing here. Only "can I reproduce every claim, including the ones I didn't ask for?" does. That is the difference between reading output and validating it.</p>
+  </div>
+
   <h2>Validation checklist</h2>
   <ul class="checklist">
     <li>Open each cited file and confirm the named methods exist as described.</li>
     <li>Recompute the MRI score by hand from the penalties in <code>AutoApprovalService</code>.</li>
+    <li>Check the <em>asides</em> too, not just the headline claims — the incidental "by the way" sentence is where invention hides, and it inherits the confidence of the correct text around it.</li>
     <li>Anything the summary got wrong or invented is written down — that list is gold for Module 7.</li>
   </ul>
 
