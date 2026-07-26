@@ -2183,7 +2183,8 @@ npm test yourself and iterate until green, then show me the run.</code></pre>
 
   <div class="expected">
     <div class="callout__label">Expected output</div>
-    <p>Roughly: four test files, each mocking the client with per-test resolved or rejected values, a <code>StatusBadge</code> loop over the four statuses, and async assertions via <code>findByText</code>. Around a dozen tests total — small, because it pins behaviors, not lines.</p>
+    <p>Roughly: three or four test files, each mocking the client with per-test resolved or rejected values, a <code>StatusBadge</code> loop over the four statuses, and async assertions via <code>findByText</code>. Around a dozen tests total — small, because it pins behaviors, not lines.</p>
+    <p>The count depends on one judgement call: appeal <em>visibility</em> is decided by <code>RequestList</code>, so those assertions naturally live in its test file rather than a separate <code>AppealForm</code> one. Three files is a perfectly good answer — count behaviors pinned, not files created.</p>
   </div>
 
   <h2>Validation checklist</h2>
@@ -2199,7 +2200,7 @@ npm test yourself and iterate until green, then show me the run.</code></pre>
     <div class="callout__label">Verify it</div>
     <pre class="code code--term"><code><span class="p">$</span> cd labs/priorauth-web
 <span class="p">$</span> npm test
-<span class="c"># expect: 4 test files, all green, finishing in a few seconds —</span>
+<span class="c"># expect: 3-4 test files, all green, finishing in a few seconds —</span>
 <span class="c"># with the service NOT running. That's the proof the suite is isolated.</span></code></pre>
   </div>
 

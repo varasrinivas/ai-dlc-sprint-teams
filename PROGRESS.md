@@ -165,4 +165,16 @@ Status: ✅ built · 🔨 in progress · ⬜ not started
   invented supporting detail — is harder to catch than the wrong-score case the module already
   describes; added a checklist line about auditing asides. Also noted in m25 that a headless
   `claude -p` review runs without shell access, so the subagent can't run the build
+- 2026-07-26 · m29/m30/m31 · ran the React track for real (service + Vite + browser), then reverted.
+  All three labs are completable and their sharpest claims hold. m29: the checkpoint's "exactly four
+  files" is right — API client, SubmitForm, its test, App.jsx, with `RequestList` untouched — and the
+  key-bump refresh works (list went 3 → 4 rows); submitting 99213/M54.5/1 unit produced the result
+  card **"Approved · 0.90"**, the module's exact predicted string. m30: the Appeal action rendered on
+  the DENIED row only, filing it flipped the row to Pending review from the response, and the action
+  disappeared because the row was no longer DENIED — the precise mechanism the module describes, with
+  no UI-side "already appealed" state. m31: 11 tests green in 4.3s with the service NOT running, so
+  the mock-the-client seam really does isolate the suite. One over-specification softened: the verify
+  block demanded "4 test files", but appeal-visibility assertions belong in `RequestList.test.jsx`
+  (that's where visibility is decided), which makes 3 files the natural result — now reads "3-4", with
+  a note to count behaviours pinned rather than files created
 - _(add a line per session: date · module · what changed)_
