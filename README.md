@@ -95,10 +95,15 @@ It validates the player first, warns if the working tree is dirty or the branch 
 ETag against the local checksum. Live at
 <https://learnings.varasrinivas.com/ai-dlc-sprint-teams/>.
 
-Add `--strict` to turn those git warnings into a refusal — worth using in CI. The bucket,
-key prefix, and CloudFront distribution default to the live site and can be overridden
-with `--bucket` / `--prefix` / `--distribution`. Needs the AWS CLI on PATH with
-credentials that can write the bucket and create invalidations.
+Add `--strict` to turn those git warnings into a refusal. The bucket, key prefix, and
+CloudFront distribution default to the live site and can be overridden with
+`--bucket` / `--prefix` / `--distribution`. Needs the AWS CLI on PATH with credentials
+that can write the bucket and create invalidations.
+
+**Deploys are run locally, never from GitHub Actions.** Automating this would mean
+putting AWS credentials for the site's account into repository secrets; the course is
+public, so that exposure isn't worth the convenience. Run `python tools/deploy.py` from
+a machine that already has the credentials.
 
 ## Extending it later
 
