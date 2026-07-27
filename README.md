@@ -20,7 +20,8 @@ ai-dlc-sprint-teams/
 │   └── priorauth-web/        # the React provider portal (the front-end track's app)
 ├── tools/
 │   ├── inject_module.py      # splice a built module into the player
-│   └── validate.py           # check the player / a module
+│   ├── validate.py           # check the player / a module
+│   └── deploy.py             # publish the player to S3 + CloudFront
 ├── .claude/commands/         # authoring slash commands
 │   ├── plan-module.md
 │   ├── build-module.md
@@ -79,6 +80,26 @@ Open the player, confirm module 2 renders, then `/clear` and move to the next. F
 use `/build-lab <n>` instead of `/build-module`. Everything the commands need — the component
 kit, the module plan, the conventions — is in `CLAUDE.md`.
 
+## Publish it
+
+The player is one self-contained file, so a deploy is a single upload plus a cache
+invalidation. From the repo root:
+
+```bash
+python tools/deploy.py              # validate, upload, invalidate
+python tools/deploy.py --dry-run    # show every step, change nothing
+```
+
+It validates the player first, warns if the working tree is dirty or the branch isn't
+`main`, skips the upload when the live file already matches, and verifies the deployed
+ETag against the local checksum. Live at
+<https://learnings.varasrinivas.com/ai-dlc-sprint-teams/>.
+
+Add `--strict` to turn those git warnings into a refusal — worth using in CI. The bucket,
+key prefix, and CloudFront distribution default to the live site and can be overridden
+with `--bucket` / `--prefix` / `--distribution`. Needs the AWS CLI on PATH with
+credentials that can write the bucket and create invalidations.
+
 ## Extending it later
 
 The player and tooling are built to grow. The roadmap (see `CLAUDE.md`) includes a **React
@@ -92,4 +113,5 @@ the on-ramp to the React track.
 - **Run the labs:** Java 17+ and Maven 3.9+.
 - **Do the labs:** Claude Code (`npm install -g @anthropic-ai/claude-code`) and/or GitHub Copilot
   in VS Code. Module 4 walks through setup.
-- **Author the course:** Claude Code, plus Python 3 for the two tools.
+- **Author the course:** Claude Code, plus Python 3 for the tools.
+- **Publish the course:** the AWS CLI, authenticated against the account that owns the bucket.
